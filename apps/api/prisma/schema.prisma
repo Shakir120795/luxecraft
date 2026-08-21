@@ -1,0 +1,48 @@
+// LuxeCraft — Prisma Schema
+// Phase 1: Foundation schema.
+// Full ecommerce schema is built incrementally in later phases.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// FOUNDATION — Phase 1
+// ============================================================
+
+/// Tracks database schema migrations applied by the system.
+/// Extended in later phases as each feature domain is added.
+model SchemaVersion {
+  id          Int      @id @default(autoincrement())
+  version     String   @unique
+  description String
+  appliedAt   DateTime @default(now())
+
+  @@map("schema_versions")
+}
+
+/// Audit log foundation — records important system events.
+/// Populated by all admin actions in later phases.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      String?  // null = system action
+  actorType  String   @default("system") // "admin" | "customer" | "system"
+  action     String
+  resource   String
+  resourceId String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([actor])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
