@@ -11,8 +11,8 @@
 - [ ] Finalize payment provider(s)
 - [ ] Finalize shipping provider(s)
 - [ ] Finalize tax/VAT approach
-- [ ] Finalize email provider
-- [ ] Finalize OTP provider
+- [ ] Finalize email provider (transactional emails wired to BullMQ queue — provider TBD)
+- [ ] Finalize OTP provider (OTP generation done; delivery provider TBD)
 - [ ] Finalize analytics strategy
 - [ ] Finalize object storage provider
 - [ ] Finalize return/refund policy
@@ -23,61 +23,90 @@
 
 - [x] Core requirements discussed and locked
 - [x] Admin role scope locked to Super Admin initially
-- [x] Future staff roles explicitly deferred
+- [x] Future staff roles explicitly deferred (RBAC-ready architecture in place)
 
-## Phase 1 — Project Foundation & Infrastructure
+---
 
-- [x] Create repository structure (`.ai/` docs, root files)
-- [x] Initialize Git with `.gitignore` and `.gitattributes`
-- [x] Create environment configuration (`.env.example`)
-- [x] Create Docker Compose (PostgreSQL + Redis)
-- [x] Bootstrap Next.js storefront (`apps/storefront`)
-- [x] Bootstrap Next.js admin (`apps/admin`)
-- [x] Bootstrap NestJS API (`apps/api`)
-- [x] Configure Prisma schema foundation
-- [x] Generate Prisma client
-- [x] Configure Redis module (ioredis)
-- [x] Configure BullMQ queue foundation (4 queues)
-- [x] Create health endpoint (`GET /api/v1/health`)
-- [x] Create cross-platform project command runner
-- [x] Typecheck all apps (pass)
-- [x] Lint all apps (pass)
-- [x] Production builds (pass)
-- [x] Push to GitHub `origin/main`
-- [ ] Verify runtime with Docker (PostgreSQL + Redis running) — blocked by Docker Desktop not running
-- [ ] Run Prisma migration (`npm run db:migrate:dev`) — blocked by Docker
+## Phase 1 — Project Foundation & Infrastructure ✅ COMPLETE
 
-## Phase 2 — Authentication & Secure Admin Foundation
+- [x] Repository structure (`.ai/` docs, root files)
+- [x] Git with `.gitignore` and `.gitattributes`
+- [x] Environment configuration (`.env.example`)
+- [x] Docker Compose (PostgreSQL 16 + Redis 7)
+- [x] Next.js storefront (`apps/storefront`)
+- [x] Next.js admin (`apps/admin`)
+- [x] NestJS API (`apps/api`)
+- [x] Prisma schema foundation
+- [x] Prisma client generation
+- [x] Redis module (ioredis)
+- [x] BullMQ queue foundation (4 queues)
+- [x] Health endpoint (`GET /api/v1/health`)
+- [x] Cross-platform command runner
+- [x] Typecheck / lint / build (all pass)
+- [x] Pushed to GitHub `origin/main`
+- [ ] Runtime DB/Redis verification — blocked by Docker Desktop not running
 
-Waiting for explicit instruction to begin Phase 2.
+---
 
-- [ ] Customer: registration, login, logout
-- [ ] Customer: password hashing (bcrypt)
-- [ ] Customer: email verification foundation
-- [ ] Customer: OTP foundation
-- [ ] Customer: password reset
-- [ ] Customer: session management (JWT)
-- [ ] Customer: guest checkout foundation
-- [ ] Customer: rate limiting
-- [ ] Customer: bot/risk protection foundation
-- [ ] Admin: separate authentication boundary
-- [ ] Admin: Super Admin / Owner only
-- [ ] Admin: protected admin routes
-- [ ] Admin: secure sessions (separate JWT)
-- [ ] Admin: login attempt protection
-- [ ] Admin: session expiration/invalidation
-- [ ] Admin: 2FA-ready architecture
-- [ ] Admin: audit log foundation
-- [ ] Security: authorization guards
-- [ ] Security: CORS strategy
-- [ ] Security: CSRF strategy
-- [ ] Security: security headers
-- [ ] Security: input validation
+## Phase 2 — Authentication & Secure Admin Foundation ✅ COMPLETE
+
+- [x] Dependencies: @nestjs/jwt, @nestjs/passport, passport-jwt, bcrypt, @nestjs/throttler, helmet, cookie-parser
+- [x] Prisma schema: User, Session, OtpCode, PasswordResetToken, LoginAttempt, AdminUser, AdminSession, AuditLog
+- [x] Prisma client regenerated
+- [x] UsersModule: create, find, verify password, mark verified, update password
+- [x] OtpModule: crypto-random OTP, TTL, max-attempts, invalidation
+- [x] AuditModule: fire-and-forget log writer, paginated reader
+- [x] Customer auth: register, login, logout, refresh, logout-all
+- [x] Customer auth: email verification + OTP
+- [x] Customer auth: forgot-password / reset-password (no email enumeration)
+- [x] Customer auth: JWT strategy (separate secret, 15 min access token)
+- [x] Customer auth: refresh token rotation (30-day sessions)
+- [x] Customer auth: login attempt tracking + lockout (10 failures / 15 min)
+- [x] Admin auth: separate module, separate JWT secret, 8h access token
+- [x] Admin auth: account lockout after 5 failures (30 min)
+- [x] Admin auth: login/logout audit logged
+- [x] Admin auth: refresh token rotation (7-day sessions)
+- [x] Admin auth: create-admin endpoint (Super Admin only)
+- [x] Guards: JwtAuthGuard, OptionalJwtAuthGuard, AdminJwtAuthGuard, SuperAdminGuard
+- [x] Decorators: @CurrentUser(), @CurrentAdmin(), @Public()
+- [x] AuditInterceptor for admin mutation routes
+- [x] Helmet security headers
+- [x] Global ThrottlerGuard (100 req/60s)
+- [x] Seed script: creates initial Super Admin from env vars
+- [x] Typecheck / lint / build (all pass — 0 errors, 0 warnings)
+- [x] Pushed to GitHub `origin/main`
+- [ ] Runtime migration + seed — blocked by Docker Desktop not running
+
+---
 
 ## Phase 3 — Catalog, Products, Categories & Inventory
 
-Deferred — awaiting Phase 2 completion.
+Waiting for explicit instruction to begin Phase 3.
 
-## Phases 4–9
+- [ ] Categories: create, edit, hide, archive, safe-delete, reorder
+- [ ] Categories: image upload + external URL
+- [ ] Categories: description, SEO metadata
+- [ ] Initial categories: Hand Knotted Rugs, Hand Tufted Rugs, Flat Weave Rugs, Craft & Statue
+- [ ] Products: create, edit, hide, archive, safe-delete
+- [ ] Products: SKU, description, short description, regular/sale price, status
+- [ ] Products: SEO data (title, description, slug)
+- [ ] Products: media (upload + URL, multiple images, main image, gallery, alt text)
+- [ ] Products: variants (SKU, price, stock, weight, dimensions, availability)
+- [ ] Products: customization options foundation
+- [ ] Inventory: stock quantity, available/reserved stock, variant-level
+- [ ] Inventory: low-stock threshold, out-of-stock state
+- [ ] Inventory: manual adjustment with audit trail
+- [ ] Admin API: full CRUD for categories, products, variants, inventory
+- [ ] Storefront API: public product listing, product detail, category pages
+- [ ] Typecheck / lint / build / tests
+- [ ] Push to GitHub `origin/main`
+
+---
+
+## Phase 4 — Customer Storefront & Shopping Experience
+
+Deferred — awaiting Phase 3 completion.
+
+## Phases 5–9
 
 Deferred — see `.ai/DEVELOPMENT_PHASES.md` for full plan.

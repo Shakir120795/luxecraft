@@ -1,6 +1,6 @@
 // LuxeCraft — Prisma Schema
-// Phase 1: Foundation schema.
-// Full ecommerce schema is built incrementally in later phases.
+// Phase 2: Authentication & Secure Admin Foundation
+// Phase 1 models retained; Phase 2 auth models added.
 
 generator client {
   provider = "prisma-client-js"
@@ -15,8 +15,7 @@ datasource db {
 // FOUNDATION — Phase 1
 // ============================================================
 
-/// Tracks database schema migrations applied by the system.
-/// Extended in later phases as each feature domain is added.
+/// Tracks database schema versions applied by the system.
 model SchemaVersion {
   id          Int      @id @default(autoincrement())
   version     String   @unique
@@ -26,12 +25,200 @@ model SchemaVersion {
   @@map("schema_versions")
 }
 
-/// Audit log foundation — records important system events.
-/// Populated by all admin actions in later phases.
+// ============================================================
+// AUTHENTICATION — Phase 2
+// ============================================================
+
+/// Customer account.
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  passwordHash      String?   // null for OAuth-only accounts (future)
+  firstName         String?
+  lastName          String?
+  phone             String?
+  country           String?
+  status            UserStatus @default(ACTIVE)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  sessions          Session[]
+  otpCodes          OtpCode[]
+  passwordResets    PasswordResetToken[]
+  loginAttempts     LoginAttempt[]
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+/// Customer authenticated session (refresh-token based).
+model Session {
+  id           String    @id @default(cuid())
+  userId       String
+  refreshToken String    @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+/// OTP codes for email verification and checkout verification.
+model OtpCode {
+  id         String      @id @default(cuid())
+  userId     String?
+  email      String
+  code       String
+  purpose    OtpPurpose
+  used       Boolean     @default(false)
+  attempts   Int         @default(0)
+  expiresAt  DateTime
+  createdAt  DateTime    @default(now())
+  usedAt     DateTime?
+
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email, purpose])
+  @@index([code])
+  @@index([expiresAt])
+  @@map("otp_codes")
+}
+
+enum OtpPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  CHECKOUT_VERIFICATION
+  LOGIN_VERIFICATION
+}
+
+/// Password reset tokens.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  used      Boolean   @default(false)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+/// Tracks login attempts for rate-limiting and lockout.
+model LoginAttempt {
+  id          String   @id @default(cuid())
+  email       String
+  userId      String?
+  ipAddress   String?
+  userAgent   String?
+  success     Boolean
+  failReason  String?
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@map("login_attempts")
+}
+
+// ============================================================
+// ADMIN — Phase 2
+// ============================================================
+
+/// Admin user — completely separate from customer users.
+/// Phase 2: Super Admin / Owner role only.
+/// RBAC-ready for future granular roles.
+model AdminUser {
+  id                  String          @id @default(cuid())
+  email               String          @unique
+  passwordHash        String
+  firstName           String
+  lastName            String
+  role                AdminRole       @default(SUPER_ADMIN)
+  status              AdminStatus     @default(ACTIVE)
+  twoFactorEnabled    Boolean         @default(false)
+  twoFactorSecret     String?         // encrypted TOTP secret (future)
+  lastLoginAt         DateTime?
+  lastLoginIp         String?
+  failedLoginAttempts Int             @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  createdBy           String?         // adminUserId that created this account
+
+  // Relations
+  sessions            AdminSession[]
+  auditLogs           AuditLog[]
+
+  @@index([email])
+  @@index([status])
+  @@map("admin_users")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  // Future: PRODUCT_MANAGER | ORDER_MANAGER | SUPPORT | DESIGNER | FINANCE | MARKETING | ANALYST
+}
+
+enum AdminStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+/// Admin authenticated session.
+/// Separate from customer sessions — different secret, shorter TTL.
+model AdminSession {
+  id           String      @id @default(cuid())
+  adminId      String
+  refreshToken String      @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime    @default(now())
+
+  admin        AdminUser   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([refreshToken])
+  @@map("admin_sessions")
+}
+
+// ============================================================
+// AUDIT — Phase 2 (extended from Phase 1 foundation)
+// ============================================================
+
+/// Audit log — records all important admin actions.
+/// Linked to AdminUser when actor is known.
 model AuditLog {
-  id         String   @id @default(cuid())
-  actor      String?  // null = system action
-  actorType  String   @default("system") // "admin" | "customer" | "system"
+  id         String     @id @default(cuid())
+  adminId    String?
+  actor      String?    // display label (email or "system")
+  actorType  String     @default("system") // "admin" | "customer" | "system"
   action     String
   resource   String
   resourceId String?
@@ -39,8 +226,11 @@ model AuditLog {
   after      Json?
   ipAddress  String?
   userAgent  String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime   @default(now())
 
+  admin      AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([adminId])
   @@index([actor])
   @@index([resource, resourceId])
   @@index([createdAt])
