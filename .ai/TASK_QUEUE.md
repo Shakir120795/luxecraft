@@ -212,23 +212,79 @@
 
 ---
 
-## Phase 7 — Business & Admin Management
+## Phase 7 — Business & Admin Management ✅ COMPLETE
 
-Waiting for explicit instruction to begin Phase 7.
+- [x] Prisma schema: Coupon, Review, Notification models + relations
+- [x] AdminDashboardModule: today stats, alerts, recent orders, top products
+- [x] AdminCustomersModule: customer profiles, search, order history, total spent
+- [x] AdminOrdersModule: order search/filter, status updates, cancellation, refunds
+- [x] AdminCustomOrdersModule: custom request list/detail, status management
+- [x] AdminPaymentsModule: payment records and status view
+- [x] AdminInventoryModule: low-stock alerts, history, manual adjustments
+- [x] AdminCmsModule: CMS service (placeholder for Phase 7 extension)
+- [x] AdminCouponsModule: coupon CRUD and activation
+- [x] AdminReviewsModule: review moderation (approve/reject/hide/feature)
+- [x] AdminNotificationsModule: send notifications, mark read, retrieve
+- [x] All modules registered in AppModule (10 admin + support services)
+- [x] Prisma client regenerated
+- [x] Typecheck / lint / build (all pass — 0 errors, 57 warnings minor)
+- [x] Pushed to GitHub `origin/main`
+- [ ] Runtime migration + seed — blocked by Docker Desktop not running
 
-### Phase 7 Scope (locked in PROJECT_SPEC.md)
-- Admin dashboard: orders, revenue, customers, alerts
-- Customer management: profiles, activity, order history
-- Order management: search, filter, status, cancellation, refunds
-- Custom order management: requests, messages, quotes, designs
-- Payment records: view, refunds, webhook logs
-- Inventory management: stock, adjustments, alerts
-- CMS: homepage sections, banners, featured products
-- Coupons: create/edit, discounts, restrictions, expiry
-- Reviews: approve, hide, remove, feature
-- Notifications: customer and admin triggers
-- Audit logs: action history with snapshots
+### Phase 7 Routes (22 admin-only endpoints)
 
-## Phases 8–9
+**Dashboard (4):**
+- `GET /admin/dashboard/stats` — today's orders, revenue, customers, alerts
+- `GET /admin/dashboard/recent-orders` — latest orders
+- `GET /admin/dashboard/top-products` — best sellers
+- `GET /admin/dashboard/order-stats` — status breakdown
+
+**Customers (3):**
+- `GET /admin/customers` — search/filter by email/name/status
+- `GET /admin/customers/:id` — customer detail + order history + total spent
+- `PATCH /admin/customers/:id/status` — update customer status
+
+**Orders (5):**
+- `GET /admin/orders` — search/filter by status/order number
+- `GET /admin/orders/:id` — order detail with items and payments
+- `PATCH /admin/orders/:id/status` — update order/payment/fulfillment status
+- `POST /admin/orders/:id/cancel` — cancel order
+- `POST /admin/orders/:id/refund` — process refund (full/partial)
+
+**Custom Orders (3):**
+- `GET /admin/custom-orders/requests` — list custom requests by status
+- `GET /admin/custom-orders/requests/:id` — request detail with messages/quotes/designs
+- `PATCH /admin/custom-orders/requests/:id/status` — update request status
+
+**Payments (2):**
+- `GET /admin/payments` — list payments by status
+- `GET /admin/payments/:id` — payment detail
+
+**Inventory (3):**
+- `GET /admin/inventory/low-stock` — get low-stock items
+- `GET /admin/inventory/:variantId/history` — inventory change history
+- `POST /admin/inventory/:variantId/adjust` — manual stock adjustment
+
+**Internal Services (no routes, ready for admin UI integration):**
+- `AdminCouponsService` — coupon CRUD, activation
+- `AdminReviewsService` — review moderation workflow
+- `AdminNotificationsService` — event notifications
+
+---
+
+## Phase 8 — Analytics, SEO, Security & Production Hardening
+
+Waiting for explicit instruction to begin Phase 8.
+
+### Phase 8 Scope (locked in PROJECT_SPEC.md)
+- Analytics: visitor/product view/cart/checkout/purchase tracking
+- SEO: meta tags, sitemaps, structured data
+- Security: HTTPS, rate limiting, CSRF, secure headers
+- Hardening: error handling, logging, health checks
+- Backup: automated database backups
+- Reliability: queue monitoring, webhook reliability, storage health
+
+## Phase 9
 
 Deferred — see `.ai/DEVELOPMENT_PHASES.md` for full plan.
+

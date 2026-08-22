@@ -52,6 +52,7 @@ model User {
   addresses         Address[]
   orders            Order[]
   customRequests    CustomRequest[]
+  reviews           Review[]
 
   @@index([email])
   @@index([status])
@@ -315,6 +316,8 @@ model Product {
   inventoryLogs    InventoryLog[]
   cartItems        CartItem[]
   wishlistItems    WishlistItem[]
+
+  reviews          Review[]
 
   @@index([categoryId])
   @@index([slug])
@@ -950,3 +953,79 @@ enum DesignApprovalStatus {
   REVISION_REQUESTED
 }
 
+
+
+// ============================================================
+// COUPONS, REVIEWS, NOTIFICATIONS — Phase 7
+// ============================================================
+
+/// Coupon. Percentage or fixed discount with restrictions.
+model Coupon {
+  id              String        @id @default(cuid())
+  code            String        @unique
+  discountType    String        @default("PERCENTAGE") // PERCENTAGE or FIXED
+  discountValue   Decimal       @db.Decimal(10, 2)    // percentage (e.g., 10 for 10%) or fixed amount
+  currency        String        @default("USD")
+  
+  // Restrictions
+  minOrderAmount  Decimal?      @db.Decimal(12, 2)
+  maxUsageCount   Int?          // null = unlimited
+  usedCount       Int           @default(0)
+  maxPerCustomer  Int?          // null = unlimited
+  applicableProducts String[]   // array of product IDs; empty = all products
+  applicableCategories String[] // array of category IDs; empty = all categories
+  
+  // Validity
+  validFrom       DateTime
+  validTo         DateTime?
+  isActive        Boolean       @default(true)
+  
+  // Metadata
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@map("coupons")
+}
+
+/// Review. Customer product review.
+model Review {
+  id              String        @id @default(cuid())
+  productId       String
+  userId          String?
+  rating          Int                          // 1-5
+  title           String?
+  content         String?
+  status          String        @default("PENDING") // PENDING, APPROVED, HIDDEN, REJECTED
+  isFeatured      Boolean       @default(false)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([status])
+  @@map("reviews")
+}
+
+/// Notification. System notifications for customers and admins.
+model Notification {
+  id              String        @id @default(cuid())
+  recipientId     String        // user ID or admin ID
+  type            String        // ORDER_PLACED, PAYMENT_CONFIRMED, CUSTOM_REQUEST_UPDATE, QUOTE_READY, DESIGN_APPROVED, etc.
+  title           String
+  message         String
+  relatedId       String?       // order ID, custom request ID, etc.
+  read            Boolean       @default(false)
+  readAt          DateTime?
+  
+  createdAt       DateTime      @default(now())
+
+  @@index([recipientId])
+  @@index([type])
+  @@index([read])
+  @@map("notifications")
+}

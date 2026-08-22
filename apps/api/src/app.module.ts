@@ -46,6 +46,18 @@ import { CustomMessagesModule } from './modules/custom-messages/custom-messages.
 import { CustomQuotesModule } from './modules/custom-quotes/custom-quotes.module';
 import { CustomDesignsModule } from './modules/custom-designs/custom-designs.module';
 
+// Phase 7 — Admin Management
+import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.module';
+import { AdminCustomersModule } from './modules/admin-customers/admin-customers.module';
+import { AdminOrdersModule } from './modules/admin-orders/admin-orders.module';
+import { AdminCustomOrdersModule } from './modules/admin-custom-orders/admin-custom-orders.module';
+import { AdminPaymentsModule } from './modules/admin-payments/admin-payments.module';
+import { AdminInventoryModule } from './modules/admin-inventory/admin-inventory.module';
+import { AdminCmsModule } from './modules/admin-cms/admin-cms.module';
+import { AdminCouponsModule } from './modules/admin-coupons/admin-coupons.module';
+import { AdminReviewsModule } from './modules/admin-reviews/admin-reviews.module';
+import { AdminNotificationsModule } from './modules/admin-notifications/admin-notifications.module';
+
 // Feature
 import { HealthModule } from './modules/health/health.module';
 
@@ -101,6 +113,18 @@ import { HealthModule } from './modules/health/health.module';
     CustomMessagesModule,
     CustomQuotesModule,
     CustomDesignsModule,
+
+    // ----- Phase 7 — Admin Management ---------------------
+    AdminDashboardModule,
+    AdminCustomersModule,
+    AdminOrdersModule,
+    AdminCustomOrdersModule,
+    AdminPaymentsModule,
+    AdminInventoryModule,
+    AdminCmsModule,
+    AdminCouponsModule,
+    AdminReviewsModule,
+    AdminNotificationsModule,
 
     // ----- Feature modules ----------------------------------
     HealthModule,

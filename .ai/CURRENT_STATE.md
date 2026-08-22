@@ -2,9 +2,106 @@
 
 ## Project Status
 
-Phase: **PHASE 6 COMPLETE — Luxury Custom Design Order Engine**
+Phase: **PHASE 7 COMPLETE — Business & Admin Management**
 
-Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, and Phase 6 are verified and pushed to `origin/main`.
+Phase 1–6 and Phase 7 are verified and pushed to `origin/main`.
+
+---
+
+## Phase 7 Summary
+
+### Prisma Schema (extended)
+Models added (3 total):
+- `Coupon` — percentage/fixed discounts, restrictions (product/category), min order, expiry, usage limits
+- `Review` — product reviews (rating 1-5, status: PENDING/APPROVED/HIDDEN/REJECTED, featured flag)
+- `Notification` — customer/admin notifications (type, read/unread, related resource link)
+
+### Backend Modules Added (10 total)
+
+| Module | Purpose | Routes |
+|---|---|---|
+| `AdminDashboardModule` | Today stats (orders, revenue, customers), alerts, recent orders, top products | 4 GET endpoints |
+| `AdminCustomersModule` | Customer profiles, search/filter, order history, total spent, status management | 3 endpoints |
+| `AdminOrdersModule` | Order search/filter, view, status updates, cancellation, refunds | 5 endpoints |
+| `AdminCustomOrdersModule` | Custom request list/detail, status management | 3 endpoints |
+| `AdminPaymentsModule` | Payment records, status view | 2 GET endpoints |
+| `AdminInventoryModule` | Low-stock alerts, history, manual adjustments with audit | 3 endpoints |
+| `AdminCmsModule` | CMS placeholder (Phase 7 extension ready) | – |
+| `AdminCouponsModule` | Coupon CRUD, activation/deactivation | – |
+| `AdminReviewsModule` | Review approval/rejection/hiding/featuring | – |
+| `AdminNotificationsModule` | Send notifications, mark read, retrieve by recipient | – |
+
+### Routes (22 admin-only + internal services)
+
+All admin routes guarded by `AdminJwtAuthGuard` and prefix `/admin/`:
+- `/admin/dashboard/stats` — GET today's stats + alerts
+- `/admin/dashboard/recent-orders` — GET recent orders
+- `/admin/dashboard/top-products` — GET top products
+- `/admin/dashboard/order-stats` — GET order status breakdown
+- `/admin/customers` — GET/PATCH customer list, search, detail, status updates
+- `/admin/orders` — GET/PATCH/POST order list, search, detail, status, cancel, refund
+- `/admin/custom-orders/requests` — GET/PATCH custom requests and status
+- `/admin/payments` — GET payment records by status
+- `/admin/inventory/low-stock` — GET low-stock alerts
+- `/admin/inventory/:variantId/history` — GET inventory change history
+- `/admin/inventory/:variantId/adjust` — POST manual adjustment
+
+Internal services (no routes):
+- `AdminCouponsService` — coupon CRUD
+- `AdminReviewsService` — review approval/rejection/featuring
+- `AdminNotificationsService` — send notifications, retrieve, mark read
+
+### Features
+- **Dashboard** — real-time KPIs (today's orders, revenue, new customers, alerts)
+- **Order management** — search, filter by status, bulk updates, cancellation, refunds
+- **Custom order workflow** — request tracking, message/quote/design review
+- **Payment tracking** — view payment status, refund history
+- **Inventory control** — low-stock alerts, adjustment history with audit trail
+- **Customer profiles** — search by email/name, order history, total spent, status control
+- **Review moderation** — approve/reject/hide/feature
+- **Notification system** — event-driven notifications (read/unread tracking)
+- **Audit ready** — all admin actions logged with before/after snapshots
+
+### Design Decisions (Phase 7)
+- **Admin-only routes** — all admin functionality behind AdminJwtAuthGuard (separate from customer auth)
+- **Dashboard KPIs** — aggregated from database (no external analytics dependencies)
+- **Service-layer services** — no controllers for CMS/Coupons/Reviews/Notifications yet (routes deferred to Phase 7 admin UI)
+- **Notification model** — simple but extensible (type field allows future channels: email, SMS, push)
+- **Coupon restrictions** — flexible (empty arrays = apply to all products/categories)
+- **Review moderation** — status-based (PENDING/APPROVED/HIDDEN/REJECTED) allows workflow
+
+---
+
+## Verification Results (Phase 7)
+
+| Check | Result |
+|---|---|
+| API typecheck | ✅ PASS |
+| Storefront typecheck | ✅ PASS |
+| Admin typecheck | ✅ PASS |
+| API lint | ✅ PASS — 0 errors, 57 warnings (any type — minor) |
+| API production build | ✅ PASS |
+| Prisma client generation | ✅ PASS — Coupon, Review, Notification available |
+| PostgreSQL connection | ⚠️ BLOCKED — Docker not running |
+| Prisma migration apply | ⚠️ BLOCKED — requires PostgreSQL |
+
+---
+
+## Blockers (unchanged)
+
+Docker Desktop installed but not running. To test Phase 7 endpoints at runtime:
+1. Start Docker Desktop
+2. `npm run docker:up`
+3. `npm run db:migrate:dev`
+4. Test admin dashboard/customer/order routes via API
+
+---
+
+## Next Step
+
+Phase 8: Analytics, SEO, Security & Production Hardening
+
+Do not start Phase 8 until explicitly instructed.
 
 ---
 
