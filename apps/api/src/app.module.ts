@@ -28,6 +28,10 @@ import { ProductsModule } from './modules/products/products.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { StorefrontModule } from './modules/storefront/storefront.module';
 
+// Phase 4 — Cart & Wishlist
+import { CartModule } from './modules/cart/cart.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
+
 // Feature
 import { HealthModule } from './modules/health/health.module';
 
@@ -65,6 +69,10 @@ import { HealthModule } from './modules/health/health.module';
     ProductsModule,
     InventoryModule,
     StorefrontModule,
+
+    // ----- Phase 4 — Cart & Wishlist -----------------------
+    CartModule,
+    WishlistModule,
 
     // ----- Feature modules ----------------------------------
     HealthModule,

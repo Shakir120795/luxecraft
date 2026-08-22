@@ -1,6 +1,6 @@
 // LuxeCraft — Prisma Schema
-// Phase 3: Catalog, Products, Categories & Inventory
-// Phase 1 & 2 models retained.
+// Phase 4: Cart & Wishlist
+// Phase 1, 2 & 3 models retained.
 
 generator client {
   provider = "prisma-client-js"
@@ -47,6 +47,8 @@ model User {
   otpCodes          OtpCode[]
   passwordResets    PasswordResetToken[]
   loginAttempts     LoginAttempt[]
+  carts             Cart[]
+  wishlists         Wishlist[]
 
   @@index([email])
   @@index([status])
@@ -308,6 +310,8 @@ model Product {
   media            ProductMedia[]
   customizationOptions ProductCustomizationOption[]
   inventoryLogs    InventoryLog[]
+  cartItems        CartItem[]
+  wishlistItems    WishlistItem[]
 
   @@index([categoryId])
   @@index([slug])
@@ -358,6 +362,8 @@ model ProductVariant {
   // Relations
   product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   inventoryLogs  InventoryLog[]
+  cartItems      CartItem[]
+  wishlistItems  WishlistItem[]
 
   @@index([productId])
   @@index([sku])
@@ -443,4 +449,80 @@ enum InventoryChange {
   RETURN_RESTOCK
   INITIAL_STOCK
   CORRECTION
+}
+
+// ============================================================
+// CART & WISHLIST — Phase 4
+// ============================================================
+
+/// Shopping cart. Supports guest (sessionId) and customer (userId) carts.
+model Cart {
+  id          String    @id @default(cuid())
+  userId      String?                   // null = guest cart
+  sessionId   String?   @unique          // for guest carts
+  currency    String    @default("USD")
+  expiresAt   DateTime?                 // cart expiry for guest carts
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       CartItem[]
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([expiresAt])
+  @@map("carts")
+}
+
+/// Cart item. References product + optional variant. Stores customization snapshot.
+model CartItem {
+  id              String    @id @default(cuid())
+  cartId          String
+  productId       String
+  variantId       String?
+  quantity        Int       @default(1)
+  customization   Json?                 // selected customization options snapshot
+  priceSnapshot   Decimal   @db.Decimal(12, 2)  // price at time of add-to-cart
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  cart            Cart              @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product         Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant         ProductVariant?   @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([cartId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("cart_items")
+}
+
+/// Customer wishlist. Customer-only feature.
+model Wishlist {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       WishlistItem[]
+
+  @@map("wishlists")
+}
+
+/// Wishlist item. References product + optional variant.
+model WishlistItem {
+  id          String    @id @default(cuid())
+  wishlistId  String
+  productId   String
+  variantId   String?
+  createdAt   DateTime  @default(now())
+
+  wishlist    Wishlist          @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product     Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant     ProductVariant?   @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@unique([wishlistId, productId, variantId])
+  @@index([wishlistId])
+  @@index([productId])
+  @@map("wishlist_items")
 }

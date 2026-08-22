@@ -108,10 +108,32 @@
 
 ---
 
-## Phase 4 — Cart, Checkout & Orders
+## Phase 4 — Cart & Wishlist ✅ COMPLETE
 
-Waiting for explicit instruction to begin Phase 4.
+- [x] Prisma schema: Cart, CartItem, Wishlist, WishlistItem models
+- [x] Cart supports guest (sessionId) + customer (userId)
+- [x] Guest cart: 30-day TTL, auto-expires
+- [x] Customer cart: persistent, linked to userId
+- [x] CartModule: add/update/remove items, clear cart, calculate totals
+- [x] Cart merge on login: seamlessly combines guest + customer carts
+- [x] Price snapshot: stores price at add-to-cart time
+- [x] Customization support: JSON field for selected options
+- [x] WishlistModule: customer-only (JwtAuthGuard)
+- [x] Wishlist: add/remove/toggle, clear, check if item present
+- [x] Move to cart: direct wishlist → cart transfer
+- [x] Unique constraint: prevents duplicate product+variant in wishlist
+- [x] Cart routes: 7 endpoints with OptionalJwtAuthGuard
+- [x] Wishlist routes: 7 endpoints with JwtAuthGuard
+- [x] Typecheck / lint / build (all pass — 0 errors, 0 warnings)
+- [x] Pushed to GitHub `origin/main`
+- [ ] Runtime migration + seed — blocked by Docker Desktop not running
 
-## Phases 5–9
+---
+
+## Phase 5 — Checkout, Payments, Shipping & Orders
+
+Waiting for explicit instruction to begin Phase 5.
+
+## Phases 6–9
 
 Deferred — see `.ai/DEVELOPMENT_PHASES.md` for full plan.

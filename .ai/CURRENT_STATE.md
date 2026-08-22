@@ -2,9 +2,104 @@
 
 ## Project Status
 
-Phase: **PHASE 3 COMPLETE — Catalog, Products, Categories & Inventory**
+Phase: **PHASE 4 COMPLETE — Cart & Wishlist**
 
-Phase 1, Phase 2, and Phase 3 are verified and pushed to `origin/main`.
+Phase 1, Phase 2, Phase 3, and Phase 4 are verified and pushed to `origin/main`.
+
+---
+
+## Phase 4 Summary
+
+### Dependencies Added (`apps/api`)
+None (Phase 4 uses existing dependencies)
+
+### Prisma Schema (extended)
+Models added:
+- `Cart` — shopping cart (userId for customer, sessionId for guest, currency, expiresAt for guest carts)
+- `CartItem` — cart line items (productId, variantId, quantity, customization JSON, priceSnapshot)
+- `Wishlist` — customer wishlist (userId, unique per user)
+- `WishlistItem` — wishlist items (productId, variantId, unique constraint on wishlist+product+variant)
+
+Relations added:
+- `User.carts` — one-to-many
+- `User.wishlists` — one-to-many
+- `Product.cartItems` — one-to-many
+- `Product.wishlistItems` — one-to-many
+- `ProductVariant.cartItems` — one-to-many
+- `ProductVariant.wishlistItems` — one-to-many
+
+### Backend Modules Added
+
+| Module | Purpose |
+|---|---|
+| `CartModule` | Guest cart (sessionId, 30-day TTL) + customer cart (userId). Add/update/remove items, clear cart, calculate totals, merge guest cart on login. OptionalJwtAuthGuard supports both guest and authenticated users. |
+| `WishlistModule` | Customer-only wishlist (JwtAuthGuard). Add/remove/toggle, clear, move-to-cart (integrates with CartService), check if item in wishlist. Unique constraint prevents duplicates. |
+
+### Cart Routes — `/api/v1/cart/...`
+- `GET /` — get cart (guest or customer)
+- `GET /totals` — calculate cart subtotal, item count, currency
+- `POST /items` — add item to cart (product + optional variant + qty + customization)
+- `PATCH /items/:itemId` — update cart item (quantity or customization)
+- `DELETE /items/:itemId` — remove cart item
+- `DELETE /clear` — clear entire cart
+- `POST /merge` — merge guest cart into customer cart on login
+
+**Guard:** `OptionalJwtAuthGuard` — supports both guest (via sessionId cookie/header) and authenticated users
+
+### Wishlist Routes — `/api/v1/wishlist/...`
+- `GET /` — get customer wishlist
+- `POST /items` — add item to wishlist (product + optional variant)
+- `POST /toggle` — toggle item (add if not present, remove if present)
+- `DELETE /items/:itemId` — remove item from wishlist
+- `DELETE /clear` — clear entire wishlist
+- `POST /move-to-cart` — move wishlist item to cart with quantity
+- `GET /check?productId=...&variantId=...` — check if item is in wishlist
+
+**Guard:** `JwtAuthGuard` — customer authentication required
+
+### Features
+- **Guest cart** — sessionId-based, 30-day TTL, auto-expires
+- **Customer cart** — userId-based, persistent
+- **Cart merge on login** — seamlessly combines guest + customer carts
+- **Price snapshot** — stores price at add-to-cart time (prevents price manipulation)
+- **Customization support** — JSON field stores selected options
+- **Cart totals** — server-side calculation (subtotal, item count, currency)
+- **Wishlist toggle** — add/remove in single operation
+- **Move to cart** — direct wishlist → cart transfer
+- **Uniqueness** — wishlist prevents duplicate product+variant combinations
+
+---
+
+## Verification Results (Phase 4)
+
+| Check | Result |
+|---|---|
+| API typecheck | ✅ PASS |
+| Storefront typecheck | ✅ PASS |
+| Admin typecheck | ✅ PASS |
+| API lint | ✅ PASS — 0 errors, 0 warnings |
+| API production build | ✅ PASS |
+| Prisma client generation | ✅ PASS — Cart, CartItem, Wishlist, WishlistItem available |
+| PostgreSQL connection | ⚠️ BLOCKED — Docker not running |
+| Prisma migration apply | ⚠️ BLOCKED — requires PostgreSQL |
+
+---
+
+## Blockers (unchanged from Phase 1, 2 & 3)
+
+Docker Desktop installed but not running. To test cart/wishlist endpoints at runtime:
+1. Start Docker Desktop
+2. `npm run docker:up`
+3. `npm run db:migrate:dev`
+4. Test cart/wishlist API via Postman/Thunder Client
+
+---
+
+## Next Step
+
+Phase 5: Checkout, Payments, Shipping & Orders
+
+Do not start Phase 5 until explicitly instructed.
 
 ---
 
