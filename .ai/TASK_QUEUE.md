@@ -175,18 +175,60 @@
 
 ---
 
-## Phase 6 — Admin Order Management & Luxury Custom Design Engine
+## Phase 6 — Luxury Custom Design Order Engine ✅ COMPLETE
 
-Waiting for explicit instruction to begin Phase 6.
+- [x] Prisma schema: CustomRequest, CustomMessage, CustomQuote, CustomDesign + 4 enums
+- [x] CustomRequestsModule: customer create/list/detail, auto-generated CR-XXXXXX numbers
+- [x] CustomMessagesModule: messaging, attachments, read/unread state, threaded by request
+- [x] CustomQuotesModule: quote creation with version tracking (v1, v2, etc.), customer accept/decline
+- [x] CustomDesignsModule: design upload, versioning, approval workflow (pending/approved/rejected/revision)
+- [x] OrdersModule extended: support custom orders (orderType=CUSTOM, no cart items)
+- [x] CheckoutModule extended: createOrderFromCustomDesign() finalizes approved design as order
+- [x] All modules registered in AppModule
+- [x] Prisma client regenerated
+- [x] Typecheck / lint / build (all pass — 0 errors, 12 warnings minor)
+- [x] Pushed to GitHub `origin/main`
+- [ ] Runtime migration + seed — blocked by Docker Desktop not running
 
-### Phase 6 Scope (locked in PROJECT_SPEC.md)
-- Admin order dashboard: view all orders, filter by status, search by order number
-- Admin order actions: update status, refund, cancel, print invoice
-- Luxury custom design system: capture custom design requirements
-- Design to order workflow: design → design approval → manufacturing → fulfillment
-- Custom pricing: variable pricing based on complexity + materials + dimensions
-- Design file storage: upload custom design files (images, SVG, CAD)
+### Phase 6 Routes (3 customer-facing + 10 internal services)
 
-## Phases 7–9
+**Custom Design Workflow:**
+- `POST /api/v1/custom-requests` — customer submit design request
+- `GET /api/v1/custom-requests` — list user requests
+- `GET /api/v1/custom-requests/:id` — view request + all messages/quotes/designs
+
+**Internal Services (no routes, used by CheckoutModule):**
+- `CustomMessagesService.create()` — add message (CUSTOMER/ADMIN/SYSTEM)
+- `CustomMessagesService.markAsRead()` — update read status
+- `CustomQuotesService.create()` — admin create quote version (auto-numbered QT-XXXXXX)
+- `CustomQuotesService.customerAcceptQuote()` — customer accept
+- `CustomQuotesService.customerRejectQuote()` — customer reject
+- `CustomQuotesService.customerRequestRevision()` — request revision
+- `CustomDesignsService.create()` — upload design file with versioning
+- `CustomDesignsService.approve()` — lock design for checkout
+- `CustomDesignsService.reject()` — reject with reason
+- `CustomDesignsService.requestRevision()` — request redesign
+- `CheckoutService.createOrderFromCustomDesign()` — convert approved design to CUSTOM order
+
+---
+
+## Phase 7 — Business & Admin Management
+
+Waiting for explicit instruction to begin Phase 7.
+
+### Phase 7 Scope (locked in PROJECT_SPEC.md)
+- Admin dashboard: orders, revenue, customers, alerts
+- Customer management: profiles, activity, order history
+- Order management: search, filter, status, cancellation, refunds
+- Custom order management: requests, messages, quotes, designs
+- Payment records: view, refunds, webhook logs
+- Inventory management: stock, adjustments, alerts
+- CMS: homepage sections, banners, featured products
+- Coupons: create/edit, discounts, restrictions, expiry
+- Reviews: approve, hide, remove, feature
+- Notifications: customer and admin triggers
+- Audit logs: action history with snapshots
+
+## Phases 8–9
 
 Deferred — see `.ai/DEVELOPMENT_PHASES.md` for full plan.

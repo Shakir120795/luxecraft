@@ -12,7 +12,8 @@ export class OrdersService {
     userId?: string;
     guestEmail?: string;
     orderType: 'STANDARD' | 'CUSTOM';
-    cart: any;
+    customRequestId?: string;
+    cart?: any;
     shippingAddress: any;
     billingAddress: any;
     shippingMethodId: string;
@@ -44,7 +45,7 @@ export class OrdersService {
         taxAmount: data.taxAmount,
         total: data.total,
         items: {
-          create: data.cart.items.map((item: any) => ({
+          create: (data.cart?.items ?? []).map((item: any) => ({
             productId: item.productId,
             variantId: item.variantId,
             productSnapshot: {

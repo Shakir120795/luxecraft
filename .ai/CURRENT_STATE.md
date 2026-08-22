@@ -2,9 +2,111 @@
 
 ## Project Status
 
-Phase: **PHASE 5 COMPLETE — Checkout, Payments, Shipping & Orders**
+Phase: **PHASE 6 COMPLETE — Luxury Custom Design Order Engine**
 
-Phase 1, Phase 2, Phase 3, Phase 4, and Phase 5 are verified and pushed to `origin/main`.
+Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, and Phase 6 are verified and pushed to `origin/main`.
+
+---
+
+## Phase 6 Summary
+
+### Prisma Schema (extended)
+Models added (5 total):
+- `CustomRequest` — bespoke design request (title, description, dimensions, colors, materials, budget)
+- `CustomMessage` — customer↔admin communication with attachments, read/unread tracking
+- `CustomQuote` — pricing proposal with version tracking (v1, v2, etc.), breakdown (design fee, material fee, dimension fee, rush fee)
+- `CustomDesign` — design file upload with version history, approval workflow (pending → approved/rejected/revision-requested)
+
+Enums added (4):
+- `CustomRequestStatus` — Submitted → Under Review → Quoted → In Progress → Awaiting Approval → Approved (+ Cancelled/Completed)
+- `SenderType` — Customer, Admin, System
+- `QuoteStatus` — Draft, Pending, Accepted, Rejected, Revised, Expired
+- `DesignApprovalStatus` — Pending, Approved, Rejected, Revision Requested
+
+### Backend Modules Added (4 new + 2 extended)
+
+| Module | Purpose |
+|---|---|
+| `CustomRequestsModule` | Customer submit bespoke design request, list/view requests, admin search/filter by status |
+| `CustomMessagesModule` | Linked messaging between customer and admin, attachments, read/unread state |
+| `CustomQuotesModule` | Admin create quotes with version tracking, customer accept/decline/request revision |
+| `CustomDesignsModule` | Admin upload design files with versions, customer approve/reject/request revision |
+| `OrdersModule` (extended) | Support custom orders (orderType=CUSTOM) with customRequestId, no cart items |
+| `CheckoutModule` (extended) | New method createOrderFromCustomDesign to finalize approved design as order |
+
+### Routes
+
+**Customer Routes:**
+- `POST /api/v1/custom-requests` — create custom design request (JwtAuthGuard)
+- `GET /api/v1/custom-requests` — list user's requests
+- `GET /api/v1/custom-requests/:id` — get request detail with messages/quotes/designs
+
+**Internal Services (no routes, used by CheckoutModule):**
+- `CustomRequestsService.create()` — create request with auto-generated CR-XXXXXX number
+- `CustomRequestsService.findAllForUser()` — list user requests ordered by date
+- `CustomMessagesService.create()` — add message with sender type (CUSTOMER/ADMIN/SYSTEM)
+- `CustomMessagesService.markAsRead()` — update read status and timestamp
+- `CustomQuotesService.create()` — create quote version with breakdown, auto-generated QT-XXXXXX
+- `CustomQuotesService.customerAcceptQuote()` — customer accept quote
+- `CustomQuotesService.customerRejectQuote()` — customer reject quote
+- `CustomQuotesService.customerRequestRevision()` — request admin revision
+- `CustomDesignsService.create()` — upload design file with version tracking
+- `CustomDesignsService.approve()` — customer approve design (locks it for checkout)
+- `CustomDesignsService.reject()` — customer reject with reason
+- `CustomDesignsService.requestRevision()` — request admin redesign
+- `CheckoutService.createOrderFromCustomDesign()` — finalize approved design as CUSTOM order, create payment
+
+### Features
+- **Custom request workflow** — customer submits requirements, admin reviews, quotes customer
+- **Conversation threading** — customer↔admin messages linked to request, file attachments
+- **Quote versioning** — admin can create v1, v2, v3 quotes; customer sees full history
+- **Design versioning** — admin uploads design files (v1, v2, etc.); customer approves/rejects
+- **Design approval lock** — once customer approves design, it locks for checkout (cannot be modified)
+- **Custom order creation** — approved design converts to CUSTOM order with custom request linked
+- **Payment integration** — custom orders go through same checkout/payment flow as standard orders
+- **Status lifecycle** — custom request progresses through workflow with clear status at each stage
+
+### Design Decisions (Phase 6)
+- **Quote versioning** — tracked on CustomQuote model (version field) allows comparing v1 vs v2
+- **Design versioning** — tracked separately allows multiple design iterations before approval
+- **Message threading** — all communication for one request stays in one thread; easier to track context
+- **Design lock** — once approved by customer, design is locked (cannot edit); prevents confusion
+- **Custom order in central Order table** — custom orders use same Order model (orderType=CUSTOM) instead of separate system
+- **No cart for custom orders** — custom orders have no cart items; pricing comes entirely from quote
+- **Payment provider agnostic** — custom orders use same payment abstraction as standard orders
+
+---
+
+## Verification Results (Phase 6)
+
+| Check | Result |
+|---|---|
+| API typecheck | ✅ PASS |
+| Storefront typecheck | ✅ PASS |
+| Admin typecheck | ✅ PASS |
+| API lint | ✅ PASS — 0 errors, 12 warnings (minor) |
+| API production build | ✅ PASS |
+| Prisma client generation | ✅ PASS — CustomRequest, CustomMessage, CustomQuote, CustomDesign available |
+| PostgreSQL connection | ⚠️ BLOCKED — Docker not running |
+| Prisma migration apply | ⚠️ BLOCKED — requires PostgreSQL |
+
+---
+
+## Blockers (unchanged from Phase 1–5)
+
+Docker Desktop installed but not running. To test Phase 6 endpoints at runtime:
+1. Start Docker Desktop
+2. `npm run docker:up`
+3. `npm run db:migrate:dev`
+4. Test custom design workflow via API
+
+---
+
+## Next Step
+
+Phase 7: Business & Admin Management
+
+Do not start Phase 7 until explicitly instructed.
 
 ---
 

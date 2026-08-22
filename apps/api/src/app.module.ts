@@ -40,6 +40,12 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
 
+// Phase 6 — Luxury Custom Design Engine
+import { CustomRequestsModule } from './modules/custom-requests/custom-requests.module';
+import { CustomMessagesModule } from './modules/custom-messages/custom-messages.module';
+import { CustomQuotesModule } from './modules/custom-quotes/custom-quotes.module';
+import { CustomDesignsModule } from './modules/custom-designs/custom-designs.module';
+
 // Feature
 import { HealthModule } from './modules/health/health.module';
 
@@ -89,6 +95,12 @@ import { HealthModule } from './modules/health/health.module';
     OrdersModule,
     PaymentsModule,
     CheckoutModule,
+
+    // ----- Phase 6 — Luxury Custom Design Engine -----------
+    CustomRequestsModule,
+    CustomMessagesModule,
+    CustomQuotesModule,
+    CustomDesignsModule,
 
     // ----- Feature modules ----------------------------------
     HealthModule,

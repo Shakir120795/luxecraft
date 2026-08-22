@@ -51,6 +51,7 @@ model User {
   wishlists         Wishlist[]
   addresses         Address[]
   orders            Order[]
+  customRequests    CustomRequest[]
 
   @@index([email])
   @@index([status])
@@ -777,3 +778,175 @@ model Payment {
   @@index([status])
   @@map("payments")
 }
+
+// ============================================================
+// LUXURY CUSTOM DESIGN ENGINE — Phase 6
+// ============================================================
+
+/// Custom request. Customer submits bespoke design requirements.
+model CustomRequest {
+  id              String          @id @default(cuid())
+  customRequestNumber String       @unique             // e.g. "CR-1001"
+  userId          String
+  productId       String?         // reference product/category if applicable
+  categoryId      String?
+
+  // Request details
+  title           String          // brief title of the custom design
+  description     String          // detailed design requirements
+  dimensions      String?         // e.g. "5x7 ft", "custom size 3m x 2m"
+  designNotes     String?         // additional design instructions
+  preferredColors String?         // color preferences
+  materialPreference String?      // material preferences
+  quantityRequested Int?          // if known
+  budgetRange     String?         // e.g. "$500-$1000" for customer reference
+  
+  // Status
+  status          CustomRequestStatus @default(SUBMITTED)
+  
+  // Approval
+  approvedDesignId String?        // link to approved design (when ready for checkout)
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relations
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages        CustomMessage[]
+  quotes          CustomQuote[]
+  designs         CustomDesign[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([customRequestNumber])
+  @@map("custom_requests")
+}
+
+enum CustomRequestStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  QUOTED
+  IN_PROGRESS
+  AWAITING_APPROVAL
+  APPROVED
+  CANCELLED
+  COMPLETED
+}
+
+/// Custom message. Communication between customer and admin.
+model CustomMessage {
+  id              String          @id @default(cuid())
+  customRequestId String
+  senderId        String          // user ID or admin ID
+  senderType      SenderType      @default(CUSTOMER)
+  message         String
+  attachments     String[]        // array of file URLs/keys
+  isRead          Boolean         @default(false)
+  readAt          DateTime?
+  createdAt       DateTime        @default(now())
+
+  customRequest   CustomRequest   @relation(fields: [customRequestId], references: [id], onDelete: Cascade)
+
+  @@index([customRequestId])
+  @@index([senderId])
+  @@index([isRead])
+  @@map("custom_messages")
+}
+
+enum SenderType {
+  CUSTOMER
+  ADMIN
+  SYSTEM
+}
+
+/// Custom quote. Pricing proposal for custom work.
+model CustomQuote {
+  id              String          @id @default(cuid())
+  customRequestId String
+  quoteNumber     String          @unique             // e.g. "QT-1001"
+  version         Int             @default(1)         // version tracking (v1, v2, etc.)
+  
+  // Pricing breakdown
+  baseProductPrice Decimal        @db.Decimal(12, 2)
+  designFee       Decimal         @db.Decimal(12, 2)
+  materialFee     Decimal         @db.Decimal(12, 2)  // for special materials
+  dimensionFee    Decimal         @db.Decimal(12, 2)  // for custom dimensions
+  rushFee         Decimal         @default(0) @db.Decimal(12, 2)  // rush order
+  subtotal        Decimal         @db.Decimal(12, 2)
+  discount        Decimal         @default(0) @db.Decimal(12, 2)
+  shippingEstimate Decimal        @default(0) @db.Decimal(12, 2)
+  taxEstimate     Decimal         @default(0) @db.Decimal(12, 2)
+  total           Decimal         @db.Decimal(12, 2)
+  currency        String          @default("USD")
+  
+  // Details
+  description     String?         // quote notes/justification
+  
+  // Status & approval
+  status          QuoteStatus     @default(DRAFT)
+  customerStatus  QuoteStatus     @default(PENDING)   // customer response
+  expiresAt       DateTime?       // quote validity period
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  customRequest   CustomRequest   @relation(fields: [customRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([customRequestId, version])
+  @@index([customRequestId])
+  @@index([quoteNumber])
+  @@index([status])
+  @@map("custom_quotes")
+}
+
+enum QuoteStatus {
+  DRAFT
+  PENDING           // awaiting customer response
+  ACCEPTED
+  REJECTED
+  REVISED
+  EXPIRED
+}
+
+/// Custom design. Design files and versions.
+model CustomDesign {
+  id              String          @id @default(cuid())
+  customRequestId String
+  version         Int             @default(1)         // v1, v2, etc.
+  
+  // Design files
+  designFileUrl   String                              // design file URL (uploaded to storage)
+  designFileKey   String?                             // object storage key if uploaded
+  designPreviewUrl String?                            // preview image URL
+  
+  // Details
+  description     String?         // design description/notes
+  uploadedBy      String          // admin ID who uploaded
+  
+  // Approval
+  approvalStatus  DesignApprovalStatus @default(PENDING)
+  approvedAt      DateTime?
+  approvedBy      String?         // customer ID who approved
+  rejectionReason String?         // if rejected
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  customRequest   CustomRequest   @relation(fields: [customRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([customRequestId, version])
+  @@index([customRequestId])
+  @@index([approvalStatus])
+  @@map("custom_designs")
+}
+
+enum DesignApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVISION_REQUESTED
+}
+

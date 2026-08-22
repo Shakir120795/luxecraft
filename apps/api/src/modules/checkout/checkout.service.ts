@@ -75,7 +75,6 @@ export class CheckoutService {
     total: number;
     currency: string;
   }): Promise<any> {
-    // Get address
     let shippingAddress, billingAddress;
     if (data.userId) {
       shippingAddress = await this.addresses.findOne(data.addressId, data.userId);
@@ -83,15 +82,13 @@ export class CheckoutService {
       throw new BadRequestException('Guest checkout address handling deferred to Phase 6.');
     }
 
-    billingAddress = shippingAddress; // Use same as shipping for now
+    billingAddress = shippingAddress;
 
-    // Get shipping method details
     const shippingMethod = await this.prisma.shippingMethod.findUnique({
       where: { id: data.shippingMethodId },
     });
     if (!shippingMethod) throw new BadRequestException('Invalid shipping method.');
 
-    // Create order
     const order = await this.orders.create({
       userId: data.userId,
       guestEmail: data.guestEmail,
@@ -108,13 +105,75 @@ export class CheckoutService {
       currency: data.currency,
     });
 
-    // Create payment record
     const payment = await this.payments.create({
       orderId: order.id,
-      provider: 'pending', // Will be set by payment provider integration
+      provider: 'pending',
       amount: data.total,
       currency: data.currency,
       metadata: { orderNumber: order.orderNumber },
+    });
+
+    return { order, payment };
+  }
+
+  async createOrderFromCustomDesign(data: {
+    userId: string;
+    customRequestId: string;
+    customDesignId: string;
+    addressId: string;
+    shippingMethodId: string;
+    shippingCost: number;
+    taxAmount: number;
+    subtotal: number;
+    total: number;
+    currency: string;
+  }): Promise<any> {
+    const design = await this.prisma.customDesign.findUnique({
+      where: { id: data.customDesignId },
+      include: { customRequest: true },
+    });
+    if (!design || design.approvalStatus !== 'APPROVED') {
+      throw new BadRequestException('Custom design must be approved before checkout.');
+    }
+
+    if (design.customRequest.status !== 'APPROVED' && design.customRequest.status !== 'IN_PROGRESS') {
+      throw new BadRequestException('Custom request not ready for checkout.');
+    }
+
+    const shippingAddress = await this.addresses.findOne(data.addressId, data.userId);
+    const billingAddress = shippingAddress;
+
+    const shippingMethod = await this.prisma.shippingMethod.findUnique({
+      where: { id: data.shippingMethodId },
+    });
+    if (!shippingMethod) throw new BadRequestException('Invalid shipping method.');
+
+    const order = await this.orders.create({
+      userId: data.userId,
+      orderType: 'CUSTOM',
+      customRequestId: data.customRequestId,
+      shippingAddress,
+      billingAddress,
+      shippingMethodId: data.shippingMethodId,
+      shippingMethodName: shippingMethod.name,
+      shippingCost: data.shippingCost,
+      taxAmount: data.taxAmount,
+      subtotal: data.subtotal,
+      total: data.total,
+      currency: data.currency,
+    });
+
+    const payment = await this.payments.create({
+      orderId: order.id,
+      provider: 'pending',
+      amount: data.total,
+      currency: data.currency,
+      metadata: { orderNumber: order.orderNumber, customRequestId: data.customRequestId },
+    });
+
+    await this.prisma.customRequest.update({
+      where: { id: data.customRequestId },
+      data: { approvedDesignId: data.customDesignId, status: 'APPROVED' },
     });
 
     return { order, payment };

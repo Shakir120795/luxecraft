@@ -6,9 +6,20 @@ import { ShippingModule } from '../shipping/shipping.module';
 import { TaxModule } from '../tax/tax.module';
 import { OrdersModule } from '../orders/orders.module';
 import { PaymentsModule } from '../payments/payments.module';
+import { CustomRequestsModule } from '../custom-requests/custom-requests.module';
+import { CustomDesignsModule } from '../custom-designs/custom-designs.module';
 
 @Module({
-  imports: [CartModule, AddressesModule, ShippingModule, TaxModule, OrdersModule, PaymentsModule],
+  imports: [
+    CartModule,
+    AddressesModule,
+    ShippingModule,
+    TaxModule,
+    OrdersModule,
+    PaymentsModule,
+    CustomRequestsModule,
+    CustomDesignsModule,
+  ],
   providers: [CheckoutService],
   exports: [CheckoutService],
 })
