@@ -32,6 +32,14 @@ import { StorefrontModule } from './modules/storefront/storefront.module';
 import { CartModule } from './modules/cart/cart.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 
+// Phase 5 — Checkout, Payments, Shipping & Orders
+import { AddressesModule } from './modules/addresses/addresses.module';
+import { ShippingModule } from './modules/shipping/shipping.module';
+import { TaxModule } from './modules/tax/tax.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { CheckoutModule } from './modules/checkout/checkout.module';
+
 // Feature
 import { HealthModule } from './modules/health/health.module';
 
@@ -73,6 +81,14 @@ import { HealthModule } from './modules/health/health.module';
     // ----- Phase 4 — Cart & Wishlist -----------------------
     CartModule,
     WishlistModule,
+
+    // ----- Phase 5 — Checkout, Payments, Shipping & Orders -
+    AddressesModule,
+    ShippingModule,
+    TaxModule,
+    OrdersModule,
+    PaymentsModule,
+    CheckoutModule,
 
     // ----- Feature modules ----------------------------------
     HealthModule,

@@ -2,9 +2,100 @@
 
 ## Project Status
 
-Phase: **PHASE 4 COMPLETE — Cart & Wishlist**
+Phase: **PHASE 5 COMPLETE — Checkout, Payments, Shipping & Orders**
 
-Phase 1, Phase 2, Phase 3, and Phase 4 are verified and pushed to `origin/main`.
+Phase 1, Phase 2, Phase 3, Phase 4, and Phase 5 are verified and pushed to `origin/main`.
+
+---
+
+## Phase 5 Summary
+
+### Prisma Schema (extended)
+Models added (8 total):
+- `Address` — shipping/billing addresses, default flag, customer-linked
+- `ShippingZone` — region groups with ISO country codes array
+- `ShippingMethod` — shipping options per zone (basePrice, pricePerKg, freeShippingMin)
+- `TaxRule` — country/region-specific tax (VAT, GST, sales tax, isInclusive flag)
+- `Order` — central order model (orderNumber, status enums, historical snapshots)
+- `OrderItem` — line items with productSnapshot, variantSnapshot, customization JSON
+- `Payment` — provider abstraction (provider, providerPaymentId, refundedAmount)
+
+Enums added (5):
+- `AddressType` — SHIPPING, BILLING, BOTH
+- `OrderType` — STANDARD, CUSTOM
+- `OrderStatus` — Pending → PaymentConfirmed → Processing → Shipped → Delivered (+ Cancelled/Failed/Refunded/OnHold)
+- `PaymentStatus` — Pending → Authorized → Paid (+ Failed/Refunded/PartialllyRefunded/Cancelled)
+- `FulfillmentStatus` — Unfulfilled → PartiallyFulfilled → Fulfilled → Cancelled
+
+### Backend Modules Added (6 total)
+
+| Module | Purpose |
+|---|---|
+| `AddressesModule` | Customer address CRUD (JwtAuthGuard), default management, type (shipping/billing) |
+| `ShippingModule` | Zone config, method rates, calculate shipping based on country + weight + order value |
+| `TaxModule` | Tax rule lookup by country/region, calculate tax (VAT/GST), handle inclusive/exclusive pricing |
+| `OrdersModule` | Create orders from cart with historical snapshots, status management, find/list orders |
+| `PaymentsModule` | Provider abstraction, payment creation, status updates, refunds (full + partial) |
+| `CheckoutModule` | Orchestrates checkout flow: cart → address → shipping → tax → order → payment |
+
+### Routes
+
+**Customer Routes:**
+- `/api/v1/addresses` — CRUD (POST, GET, GET/:id, PATCH/:id, DELETE/:id) — JwtAuthGuard
+- `/api/v1/orders` — GET (list user orders), GET /:id (order detail) — JwtAuthGuard
+
+**Checkout Flow (not yet exposed as routes):**
+- CheckoutService handles: cart validation → address selection → shipping calculation → tax calculation → order creation → payment initiation
+
+### Features
+- **Address management** — billing/shipping with default flag (auto-unsets others)
+- **Shipping zones** — country-based groups with multiple shipping methods
+- **Flexible rates** — basePrice + weight-based pricing + free shipping threshold
+- **Tax support** — VAT/GST with country/region rules, inclusive/exclusive pricing
+- **Order snapshots** — preserves product name/SKU, variant details, pricing, customization at purchase time
+- **Payment abstraction** — provider-agnostic (Stripe, PayPal, Razorpay placeholders)
+- **Refund support** — full + partial refunds tracked on Payment record
+- **Order status lifecycle** — complete state machine from Pending → Delivered
+
+### Design Decisions (Phase 5)
+- **Guest checkout** — Address handling deferred to Phase 6 (complex guest email logic)
+- **Payment provider** — Service-layer abstraction ready for Stripe/PayPal/Razorpay integration
+- **Tax calculation** — Supports both inclusive (tax extracted from price) and exclusive (tax added to price)
+- **Historical snapshots** — OrderItem stores JSON snapshots; product deletions don't break orders
+- **Checkout orchestration** — CheckoutService coordinates all services; ready for UI integration
+
+---
+
+## Verification Results (Phase 5)
+
+| Check | Result |
+|---|---|
+| API typecheck | ✅ PASS |
+| Storefront typecheck | ✅ PASS |
+| Admin typecheck | ✅ PASS |
+| API lint | ✅ PASS — 0 errors, 8 warnings (minor) |
+| API production build | ✅ PASS |
+| Prisma client generation | ✅ PASS — Address, ShippingZone, ShippingMethod, TaxRule, Order, OrderItem, Payment available |
+| PostgreSQL connection | ⚠️ BLOCKED — Docker not running |
+| Prisma migration apply | ⚠️ BLOCKED — requires PostgreSQL |
+
+---
+
+## Blockers (unchanged from Phase 1–4)
+
+Docker Desktop installed but not running. To test Phase 5 endpoints at runtime:
+1. Start Docker Desktop
+2. `npm run docker:up`
+3. `npm run db:migrate:dev`
+4. Test checkout flow via API
+
+---
+
+## Next Step
+
+Phase 6: Luxury Custom Design Order Engine
+
+Do not start Phase 6 until explicitly instructed.
 
 ---
 

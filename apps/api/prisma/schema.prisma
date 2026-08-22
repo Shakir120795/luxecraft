@@ -1,6 +1,6 @@
 // LuxeCraft — Prisma Schema
-// Phase 4: Cart & Wishlist
-// Phase 1, 2 & 3 models retained.
+// Phase 5: Checkout, Payments, Shipping & Orders
+// Phase 1, 2, 3 & 4 models retained.
 
 generator client {
   provider = "prisma-client-js"
@@ -49,6 +49,8 @@ model User {
   loginAttempts     LoginAttempt[]
   carts             Cart[]
   wishlists         Wishlist[]
+  addresses         Address[]
+  orders            Order[]
 
   @@index([email])
   @@index([status])
@@ -525,4 +527,253 @@ model WishlistItem {
   @@index([wishlistId])
   @@index([productId])
   @@map("wishlist_items")
+}
+
+// ============================================================
+// CHECKOUT, PAYMENTS, SHIPPING & ORDERS — Phase 5
+// ============================================================
+
+/// Customer address. Supports billing and shipping addresses.
+model Address {
+  id              String    @id @default(cuid())
+  userId          String?                     // null for guest checkout addresses
+  type            AddressType @default(SHIPPING)
+  firstName       String
+  lastName        String
+  company         String?
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  stateProvince   String?
+  postalCode      String
+  country         String                      // ISO country code (e.g. "US", "IN", "GB")
+  phone           String?
+  isDefault       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ordersShipping  Order[]   @relation("ShippingAddress")
+  ordersBilling   Order[]   @relation("BillingAddress")
+
+  @@index([userId])
+  @@index([country])
+  @@map("addresses")
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+  BOTH
+}
+
+/// Shipping zone. Defines a region for shipping pricing.
+model ShippingZone {
+  id          String    @id @default(cuid())
+  name        String                        // e.g. "US Domestic", "EU", "Worldwide"
+  countries   String[]                      // array of ISO country codes
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  methods     ShippingMethod[]
+
+  @@map("shipping_zones")
+}
+
+/// Shipping method within a zone.
+model ShippingMethod {
+  id                String    @id @default(cuid())
+  zoneId            String
+  name              String                  // e.g. "Standard", "Express", "Overnight"
+  description       String?
+  deliveryDaysMin   Int?
+  deliveryDaysMax   Int?
+  basePrice         Decimal   @db.Decimal(10, 2)
+  pricePerKg        Decimal   @default(0) @db.Decimal(10, 2)
+  freeShippingMin   Decimal?  @db.Decimal(10, 2)  // free if order total >= this
+  isActive          Boolean   @default(true)
+  sortOrder         Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  zone              ShippingZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  orders            Order[]
+
+  @@index([zoneId])
+  @@map("shipping_methods")
+}
+
+/// Tax rule. Supports country/region-specific tax rates (VAT, GST, sales tax).
+model TaxRule {
+  id            String    @id @default(cuid())
+  country       String                      // ISO country code
+  stateProvince String?                     // optional for state/province-level tax
+  taxType       String    @default("VAT")   // VAT, GST, Sales Tax, etc.
+  taxRate       Decimal   @db.Decimal(5, 2) // percentage (e.g. 20.00 for 20%)
+  isInclusive   Boolean   @default(false)   // true = price includes tax
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([country, stateProvince])
+  @@index([country])
+  @@map("tax_rules")
+}
+
+/// Order. Central order model for standard and custom orders.
+model Order {
+  id                  String       @id @default(cuid())
+  orderNumber         String       @unique               // e.g. "ORD-1001"
+  userId              String?                            // null for guest orders
+  guestEmail          String?
+
+  // Order type
+  orderType           OrderType    @default(STANDARD)
+
+  // Status
+  orderStatus         OrderStatus  @default(PENDING)
+  paymentStatus       PaymentStatus @default(PENDING)
+  fulfillmentStatus   FulfillmentStatus @default(UNFULFILLED)
+
+  // Addresses (historical snapshots stored in JSON)
+  shippingAddressId   String?
+  billingAddressId    String?
+  shippingSnapshot    Json                               // snapshot of shipping address at order time
+  billingSnapshot     Json                               // snapshot of billing address at order time
+
+  // Pricing (all in order currency)
+  currency            String       @default("USD")
+  subtotal            Decimal      @db.Decimal(12, 2)
+  shippingCost        Decimal      @db.Decimal(10, 2)
+  taxAmount           Decimal      @db.Decimal(10, 2)
+  discountAmount      Decimal      @default(0) @db.Decimal(10, 2)
+  total               Decimal      @db.Decimal(12, 2)
+
+  // Shipping
+  shippingMethodId    String?
+  shippingMethodName  String?                            // snapshot of method name
+  trackingNumber      String?
+
+  // Notes
+  customerNotes       String?
+  adminNotes          String?
+
+  // Timestamps
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  paidAt              DateTime?
+  shippedAt           DateTime?
+  deliveredAt         DateTime?
+  cancelledAt         DateTime?
+
+  // Relations
+  user                User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  shippingAddress     Address?     @relation("ShippingAddress", fields: [shippingAddressId], references: [id], onDelete: SetNull)
+  billingAddress      Address?     @relation("BillingAddress", fields: [billingAddressId], references: [id], onDelete: SetNull)
+  shippingMethod      ShippingMethod? @relation(fields: [shippingMethodId], references: [id], onDelete: SetNull)
+  items               OrderItem[]
+  payments            Payment[]
+
+  @@index([orderNumber])
+  @@index([userId])
+  @@index([guestEmail])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+enum OrderType {
+  STANDARD
+  CUSTOM
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_CONFIRMED
+  PROCESSING
+  READY_TO_SHIP
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  FAILED
+  REFUNDED
+  RETURNED
+  ON_HOLD
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  CANCELLED
+}
+
+enum FulfillmentStatus {
+  UNFULFILLED
+  PARTIALLY_FULFILLED
+  FULFILLED
+  CANCELLED
+}
+
+/// Order item. Historical snapshot of product/variant/customization at purchase time.
+model OrderItem {
+  id                String    @id @default(cuid())
+  orderId           String
+  productId         String?                           // may be null if product deleted
+  variantId         String?
+  
+  // Historical snapshots
+  productSnapshot   Json                              // product name, SKU, description, etc.
+  variantSnapshot   Json?                             // variant details if applicable
+  customization     Json?                             // selected customization options
+
+  quantity          Int
+  unitPrice         Decimal   @db.Decimal(12, 2)      // price per unit at purchase time
+  totalPrice        Decimal   @db.Decimal(12, 2)      // quantity * unitPrice
+  
+  createdAt         DateTime  @default(now())
+
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+/// Payment. Payment record with provider abstraction.
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String
+  provider          String                            // e.g. "stripe", "paypal", "razorpay"
+  providerPaymentId String?                           // provider's payment ID
+  amount            Decimal       @db.Decimal(12, 2)
+  currency          String        @default("USD")
+  status            PaymentStatus @default(PENDING)
+  paymentMethod     String?                           // e.g. "card", "upi", "wallet"
+  
+  // Metadata
+  metadata          Json?                             // provider-specific data
+  
+  // Refund
+  refundedAmount    Decimal       @default(0) @db.Decimal(12, 2)
+  
+  // Timestamps
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  paidAt            DateTime?
+  failedAt          DateTime?
+  refundedAt        DateTime?
+
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([providerPaymentId])
+  @@index([status])
+  @@map("payments")
 }

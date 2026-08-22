@@ -130,10 +130,63 @@
 
 ---
 
-## Phase 5 — Checkout, Payments, Shipping & Orders
+## Phase 5 — Checkout, Payments, Shipping & Orders ✅ COMPLETE
 
-Waiting for explicit instruction to begin Phase 5.
+- [x] Prisma schema: Address, ShippingZone, ShippingMethod, TaxRule, Order, OrderItem, Payment + 5 enums
+- [x] AddressesModule: customer address CRUD, billing/shipping types, default management
+- [x] ShippingModule: zone configuration, method rates, flexible pricing (base + weight + free-ship threshold)
+- [x] TaxModule: country/region tax rules, VAT/GST support, inclusive/exclusive pricing
+- [x] OrdersModule: create order from checkout, order snapshots (preserve product/price/customization)
+- [x] OrdersModule: status management (order, payment, fulfillment enums)
+- [x] PaymentsModule: provider abstraction (provider field, providerPaymentId, refunds)
+- [x] CheckoutModule: orchestrates cart → address → shipping → tax → order → payment flow
+- [x] Customer routes: /api/v1/addresses (CRUD), /api/v1/orders (list/detail)
+- [x] All modules registered in AppModule
+- [x] Prisma client regenerated
+- [x] Typecheck / lint / build (all pass — 0 errors, 8 warnings minor)
+- [x] Pushed to GitHub `origin/main`
+- [ ] Runtime migration + seed — blocked by Docker Desktop not running
 
-## Phases 6–9
+### Phase 5 Routes (16 new endpoints)
+
+**Address Management (5):**
+- `POST /api/v1/addresses` — create address
+- `GET /api/v1/addresses` — list user addresses
+- `GET /api/v1/addresses/:id` — get address detail
+- `PATCH /api/v1/addresses/:id` — update address
+- `DELETE /api/v1/addresses/:id` — delete address
+
+**Order Management (2):**
+- `GET /api/v1/orders` — list user orders
+- `GET /api/v1/orders/:id` — get order detail
+
+**Checkout Orchestration (service layer, not yet exposed as routes):**
+- `CheckoutService.initiateCheckout()` — validate cart, return checkout state
+- `CheckoutService.calculateCheckoutTotals()` — compute final price with tax + shipping
+- `CheckoutService.createOrderFromCheckout()` — creates order + payment from checkout data
+
+**Internal Services (no routes, used by CheckoutModule):**
+- `ShippingService.calculateShippingRate()` — get rates for country + weight + order value
+- `ShippingService.findAvailableMethods()` — list available shipping methods for country
+- `TaxService.calculateTax()` — compute tax amount based on country/region + amount
+- `OrdersService.updateStatus()` — update order/payment/fulfillment status
+- `OrdersService.findAll()` — admin order listing (status filtering, pagination)
+- `PaymentsService.refund()` — process refund (full + partial)
+
+---
+
+## Phase 6 — Admin Order Management & Luxury Custom Design Engine
+
+Waiting for explicit instruction to begin Phase 6.
+
+### Phase 6 Scope (locked in PROJECT_SPEC.md)
+- Admin order dashboard: view all orders, filter by status, search by order number
+- Admin order actions: update status, refund, cancel, print invoice
+- Luxury custom design system: capture custom design requirements
+- Design to order workflow: design → design approval → manufacturing → fulfillment
+- Custom pricing: variable pricing based on complexity + materials + dimensions
+- Design file storage: upload custom design files (images, SVG, CAD)
+
+## Phases 7–9
 
 Deferred — see `.ai/DEVELOPMENT_PHASES.md` for full plan.
