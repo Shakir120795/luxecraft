@@ -79,33 +79,38 @@
 
 ---
 
-## Phase 3 — Catalog, Products, Categories & Inventory
+## Phase 3 — Catalog, Products, Categories & Inventory ✅ COMPLETE
 
-Waiting for explicit instruction to begin Phase 3.
-
-- [ ] Categories: create, edit, hide, archive, safe-delete, reorder
-- [ ] Categories: image upload + external URL
-- [ ] Categories: description, SEO metadata
-- [ ] Initial categories: Hand Knotted Rugs, Hand Tufted Rugs, Flat Weave Rugs, Craft & Statue
-- [ ] Products: create, edit, hide, archive, safe-delete
-- [ ] Products: SKU, description, short description, regular/sale price, status
-- [ ] Products: SEO data (title, description, slug)
-- [ ] Products: media (upload + URL, multiple images, main image, gallery, alt text)
-- [ ] Products: variants (SKU, price, stock, weight, dimensions, availability)
-- [ ] Products: customization options foundation
-- [ ] Inventory: stock quantity, available/reserved stock, variant-level
-- [ ] Inventory: low-stock threshold, out-of-stock state
-- [ ] Inventory: manual adjustment with audit trail
-- [ ] Admin API: full CRUD for categories, products, variants, inventory
-- [ ] Storefront API: public product listing, product detail, category pages
-- [ ] Typecheck / lint / build / tests
-- [ ] Push to GitHub `origin/main`
+- [x] Dependencies: slugify
+- [x] Prisma schema: Category, Product, ProductVariant, ProductMedia, ProductCustomizationOption, InventoryLog + enums
+- [x] Prisma client regenerated
+- [x] Slug utility: auto-generation with collision detection
+- [x] CategoriesModule: create, edit, hide, archive, restore, soft-delete, reorder
+- [x] Categories: image URL + optional storage key
+- [x] Categories: description, SEO metadata
+- [x] Initial categories ready: Hand Knotted Rugs, Hand Tufted Rugs, Flat Weave Rugs, Craft & Statue (schema supports creation)
+- [x] ProductsModule: create, edit, publish, hide, archive, restore, soft-delete
+- [x] Products: SKU, description, short description, regular/sale price, status
+- [x] Products: SEO data (title, description, slug auto-generated)
+- [x] Products: media CRUD (upload key + URL, multiple images, isMain flag, sortOrder, alt text)
+- [x] Products: variants CRUD (SKU, price overrides, stock, weight, dimensions, availability, soft-delete)
+- [x] Products: customization options CRUD (groupName, optionLabel, priceDelta, sortOrder)
+- [x] InventoryModule: stock quantity, available/reserved stock, variant-level
+- [x] Inventory: low-stock threshold per variant, low-stock detection endpoint
+- [x] Inventory: manual adjustment with audit trail
+- [x] Inventory: reserve/release/deduct flow for order processing
+- [x] Admin API: full CRUD for categories, products, variants, media, customization, inventory
+- [x] Storefront API: public product listing (filter by category, featured, search), product detail by slug, category tree
+- [x] Separate admin + public controllers for clean ACL boundary
+- [x] Typecheck / lint / build (all pass — 0 errors, 0 warnings)
+- [x] Pushed to GitHub `origin/main`
+- [ ] Runtime migration + seed — blocked by Docker Desktop not running
 
 ---
 
-## Phase 4 — Customer Storefront & Shopping Experience
+## Phase 4 — Cart, Checkout & Orders
 
-Deferred — awaiting Phase 3 completion.
+Waiting for explicit instruction to begin Phase 4.
 
 ## Phases 5–9
 

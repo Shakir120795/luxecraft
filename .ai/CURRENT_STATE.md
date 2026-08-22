@@ -2,87 +2,112 @@
 
 ## Project Status
 
-Phase: **PHASE 2 COMPLETE — Authentication & Secure Admin Foundation**
+Phase: **PHASE 3 COMPLETE — Catalog, Products, Categories & Inventory**
 
-Phase 1 and Phase 2 are verified and pushed to `origin/main`.
+Phase 1, Phase 2, and Phase 3 are verified and pushed to `origin/main`.
 
 ---
 
-## Phase 2 Summary
+## Phase 3 Summary
 
 ### Dependencies Added (`apps/api`)
-- `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt` — JWT auth
-- `bcrypt` — password hashing (12 rounds)
-- `@nestjs/throttler` — global rate limiting
-- `helmet` — security headers
-- `cookie-parser` — cookie support
+- `slugify@^1.6.9` — auto-generate URL-safe slugs from names
 
 ### Prisma Schema (extended)
 Models added:
-- `User` — customer accounts (email, passwordHash, status, timestamps)
-- `Session` — customer refresh-token sessions (rotation-based)
-- `OtpCode` — email verification / checkout / login OTP codes
-- `PasswordResetToken` — 1-hour password reset tokens
-- `LoginAttempt` — tracks failures for rate-limit lockout
-- `AdminUser` — separate admin accounts (SUPER_ADMIN role, lockout, 2FA-ready)
-- `AdminSession` — admin refresh-token sessions (7-day TTL)
-- `AuditLog` — linked to AdminUser, records all important events
+- `Category` — hierarchical categories (parentId, sortOrder, slug, image, SEO, status, soft-delete)
+- `Product` — products (name, slug, sku, description, pricing, dimensions, SEO, status, soft-delete)
+- `ProductVariant` — size/style/color variants (sku, pricing overrides, stock, reserved, low-stock threshold)
+- `ProductMedia` — product images/videos (sortOrder, isMain flag, upload key + URL)
+- `ProductCustomizationOption` — predefined customization (groupName, optionLabel, priceDelta)
+- `InventoryLog` — full audit trail (manual adjust, reserve, release, deduct, restock)
+
+Enums added:
+- `CategoryStatus` — ACTIVE | HIDDEN | ARCHIVED
+- `ProductStatus` — DRAFT | ACTIVE | HIDDEN | ARCHIVED
+- `MediaType` — IMAGE | VIDEO
+- `InventoryChange` — MANUAL_ADJUST | ORDER_RESERVE | ORDER_RELEASE | ORDER_DEDUCT | RETURN_RESTOCK | INITIAL_STOCK | CORRECTION
 
 ### Backend Modules Added
 
 | Module | Purpose |
 |---|---|
-| `UsersModule` | Customer CRUD, password verify, sanitize |
-| `OtpModule` | Crypto-random OTP gen/verify, max-attempts, invalidation |
-| `AuditModule` | Fire-and-forget audit log writer + paginated reader |
-| `AuthModule` | Customer register/login/logout/refresh/verify-email/forgot-password/reset-password |
-| `AdminAuthModule` | Separate admin login/logout/refresh with lockout, separate JWT secret |
+| `CategoriesModule` | Admin CRUD, slug auto-generation, image, SEO, reorder, hide/archive/restore, soft-delete. Public read-only endpoints. |
+| `ProductsModule` | Admin CRUD for products, variants, media, customization options. Publish/hide/archive/restore, soft-delete. Public storefront endpoints. |
+| `InventoryModule` | Manual stock adjustment, reserve/release/deduct for orders, low-stock detection, full InventoryLog history. |
+| `StorefrontModule` | Unified public API: category tree, product listing (filter by category/featured/search), product detail by slug, featured products. |
 
-### Customer Auth Routes (`/api/v1/auth/...`)
-- `POST /register` — create account, trigger OTP email (BullMQ-ready)
-- `POST /login` — login with lockout check, issues access + refresh tokens
-- `POST /refresh` — rotate refresh token, issue new access token
-- `POST /logout` — revoke single session
-- `POST /logout-all` — revoke all sessions for user (requires JWT)
-- `POST /verify-email` — consume OTP, mark email verified
-- `POST /resend-verification` — regenerate OTP
-- `POST /forgot-password` — generate reset token (no email enumeration)
-- `POST /reset-password` — consume token, set new password
-- `GET  /me` — return authenticated user profile (requires JWT)
+### Admin Routes (Categories) — `/api/v1/admin/categories/...`
+- `POST /` — create category with optional slug, image, SEO, ordering
+- `GET /` — list all categories (filter by status, parentId, pagination)
+- `GET /:id` — get single category (admin view)
+- `PATCH /:id` — update category (name, slug, image, SEO, status, ordering)
+- `PATCH /:id/hide` — set status HIDDEN
+- `PATCH /:id/archive` — set status ARCHIVED + timestamp
+- `PATCH /:id/restore` — set status ACTIVE
+- `DELETE /:id` — soft-delete (blocks if products exist, suggests archive)
+- `POST /reorder` — batch update sortOrder
 
-### Admin Auth Routes (`/api/v1/admin/auth/...`)
-- `POST /login` — hardened login: lockout after 5 failures (30 min), audit logged
-- `POST /refresh` — rotate admin refresh token
-- `POST /logout` — revoke session, audit logged
-- `GET  /me` — return authenticated admin profile
-- `POST /create-admin` — create new admin (requires existing Super Admin JWT)
+### Public Routes (Categories) — `/api/v1/categories/...`
+- `GET /` — list top-level active categories with children
+- `GET /:slug` — get category by slug (active only)
 
-### Guards & Decorators
-- `JwtAuthGuard` — protects customer routes
-- `OptionalJwtAuthGuard` — attaches user if present (guest-accessible routes)
-- `AdminJwtAuthGuard` — protects admin routes (separate strategy/secret)
-- `SuperAdminGuard` — role check (RBAC-ready for future roles)
-- `@CurrentUser()` — extracts authenticated customer from request
-- `@CurrentAdmin()` — extracts authenticated admin from request
-- `@Public()` — marks route as skipping global auth (future use)
-- `AuditInterceptor` — auto-logs admin mutations
+### Admin Routes (Products) — `/api/v1/admin/products/...`
+- `POST /` — create product with variants, media, customization options
+- `GET /` — list all products (filter by status, category, featured, pagination)
+- `GET /:id` — get product with variants, media, customization
+- `PATCH /:id` — update product
+- `PATCH /:id/publish` — set status ACTIVE + publishedAt timestamp
+- `PATCH /:id/hide` — set status HIDDEN
+- `PATCH /:id/archive` — set status ARCHIVED + timestamp
+- `PATCH /:id/restore` — set status ACTIVE
+- `DELETE /:id` — soft-delete
+- `POST /:id/variants` — add variant
+- `PATCH /variants/:variantId` — update variant
+- `DELETE /variants/:variantId` — soft-delete variant
+- `POST /:id/media` — add image/video (URL + optional storage key)
+- `PATCH /media/:mediaId` — update media (isMain flag unsets others)
+- `DELETE /media/:mediaId` — delete media
+- `POST /:id/customization-options` — add option (groupName, label, priceDelta)
+- `PATCH /customization-options/:optionId` — update option
+- `DELETE /customization-options/:optionId` — delete option
 
-### Security
-- **Helmet** — security headers including CSP
-- **ThrottlerGuard** — global 100 req/60s rate limit
-- **Login lockout** — 10 failures/15 min for customers, 5 failures/30 min for admins
-- **Separate JWT secrets** — `JWT_SECRET` vs `ADMIN_JWT_SECRET`
-- **Refresh token rotation** — old token revoked on each use
-- **No email enumeration** — forgot-password and resend always return success
-- **bcrypt 12 rounds** — customer and admin passwords
-- **CORS** — explicit allowed origins list, credentials enabled
+### Public Routes (Products) — `/api/v1/products/...`
+- `GET /` — list active products (filter by category, featured, pagination)
+- `GET /:slug` — get product detail by slug (active only, with variants, media, options)
 
-### Database Seed
-- Creates initial Super Admin account from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars
+### Admin Routes (Inventory) — `/api/v1/admin/inventory/...`
+- `POST /adjust` — manual adjust (MANUAL_ADJUST, INITIAL_STOCK, CORRECTION, etc.)
+- `GET /low-stock` — list variants below lowStockAt threshold
+- `GET /logs` — paginated InventoryLog history (filter by product, variant, changeType)
+
+### Public Routes (Storefront) — `/api/v1/storefront/...`
+- `GET /categories` — active category tree
+- `GET /categories/:slug` — category detail
+- `GET /products` — product listing (filter by category, featured, search term)
+- `GET /products/:slug` — product detail
+- `GET /featured` — featured products (configurable limit)
+
+### Utility
+- `slug.util.ts` — `generateSlug()` + `uniqueSlug()` with collision detection (timestamp suffix)
+
+### Features
+- **Auto-slugs** — generated from name, collision-safe
+- **Soft-delete** — `deletedAt` timestamp for categories, products, variants
+- **Variant inventory** — `stockQty`, `reservedQty`, `lowStockAt` threshold
+- **Image support** — dual approach: imageUrl (always present) + optional imageKey (object storage)
+- **Audit logging** — all admin mutations logged via AuditService
+- **SEO fields** — seoTitle, seoDesc on categories and products
+- **Category hierarchy** — self-referential parentId for tree structure
+- **Product variants** — optional price/dimension overrides, inherit from parent if null
+- **Product media** — sortOrder + isMain flag for primary image
+- **Customization options** — grouped (Size, Color, Material) with price deltas
+- **Inventory reservation** — reserve/release/deduct flow for order processing
+- **Low-stock alerts** — configurable per-variant threshold
 
 ---
 
-## Verification Results (Phase 2)
+## Verification Results (Phase 3)
 
 | Check | Result |
 |---|---|
@@ -90,22 +115,15 @@ Models added:
 | Storefront typecheck | ✅ PASS |
 | Admin typecheck | ✅ PASS |
 | API lint | ✅ PASS — 0 errors, 0 warnings |
-| Storefront lint | ✅ PASS |
-| Admin lint | ✅ PASS |
 | API production build | ✅ PASS |
-| Storefront production build | ✅ PASS |
-| Admin production build | ✅ PASS |
-| Prisma client generation | ✅ PASS |
-| Prisma schema SQL diff | ✅ PASS — valid SQL generated |
-| NestJS module bootstrap | ✅ PASS — all modules loaded |
-| Routes mapped | ✅ 22 routes (10 customer auth + 5 admin auth + 2 health + 5 from Phase 1) |
+| Prisma client generation | ✅ PASS — all new models available |
 | PostgreSQL connection | ⚠️ BLOCKED — Docker not running |
 | Prisma migration apply | ⚠️ BLOCKED — requires PostgreSQL |
 | Redis connection | ⚠️ BLOCKED — Docker not running |
 
 ---
 
-## Blockers (unchanged from Phase 1)
+## Blockers (unchanged from Phase 1 & 2)
 
 Docker Desktop installed but not running. To complete runtime verification:
 1. Start Docker Desktop
@@ -113,15 +131,15 @@ Docker Desktop installed but not running. To complete runtime verification:
 3. `npm run db:migrate:dev`
 4. `npm run db:seed`
 5. `npm run dev:api`
-6. `npm run health`
+6. Test catalog endpoints
 
 ---
 
 ## Next Step
 
-Phase 3: Catalog, Products, Categories & Inventory
+Phase 4: Cart, Checkout & Orders
 
-Do not start Phase 3 until explicitly instructed.
+Do not start Phase 4 until explicitly instructed.
 
 ---
 

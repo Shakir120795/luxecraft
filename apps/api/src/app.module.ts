@@ -22,6 +22,12 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 
+// Phase 3 — Catalog & Inventory
+import { CategoriesModule } from './modules/categories/categories.module';
+import { ProductsModule } from './modules/products/products.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { StorefrontModule } from './modules/storefront/storefront.module';
+
 // Feature
 import { HealthModule } from './modules/health/health.module';
 
@@ -53,6 +59,12 @@ import { HealthModule } from './modules/health/health.module';
     AuditModule,
     AuthModule,
     AdminAuthModule,
+
+    // ----- Phase 3 — Catalog & Inventory -------------------
+    CategoriesModule,
+    ProductsModule,
+    InventoryModule,
+    StorefrontModule,
 
     // ----- Feature modules ----------------------------------
     HealthModule,
