@@ -1029,3 +1029,38 @@ model Notification {
   @@index([read])
   @@map("notifications")
 }
+
+
+// ============================================================
+// ANALYTICS & OBSERVABILITY — Phase 8
+// ============================================================
+
+/// Analytics event. Tracks visitor behavior funnel.
+model AnalyticsEvent {
+  id              String        @id @default(cuid())
+  eventType       String        // VISITOR_LANDED, PRODUCT_VIEWED, CATEGORY_VIEWED, ITEM_ADDED_TO_CART, CHECKOUT_STARTED, PURCHASE_COMPLETED, ABANDONED_CART
+  userId          String?       // null for guests
+  sessionId       String?       // guest session tracking
+  
+  // Context
+  productId       String?       // if product-related
+  categoryId      String?       // if category-related
+  orderId         String?       // if purchase-related
+  
+  // Environment
+  country         String?       // geo-location
+  device          String?       // mobile, desktop, tablet
+  browser         String?       // user agent
+  referrer        String?       // traffic source
+  
+  // Metadata
+  metadata        Json?         // event-specific data
+  
+  createdAt       DateTime      @default(now())
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("analytics_events")
+}

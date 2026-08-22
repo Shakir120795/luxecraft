@@ -2,9 +2,127 @@
 
 ## Project Status
 
-Phase: **PHASE 7 COMPLETE — Business & Admin Management**
+Phase: **PHASE 8 COMPLETE — Analytics, SEO, Security & Production Hardening**
 
-Phase 1–6 and Phase 7 are verified and pushed to `origin/main`.
+Phase 1–7 and Phase 8 are verified and pushed to `origin/main`.
+
+---
+
+## Phase 8 Summary
+
+### Prisma Schema (extended)
+Models added (1):
+- `AnalyticsEvent` — event tracking (visitor, product view, category view, cart, checkout, purchase, abandoned cart)
+
+### Backend Modules Added (2)
+
+| Module | Purpose |
+|---|---|
+| `AnalyticsModule` | Capture events, conversion funnel, top products, revenue metrics, abandoned carts |
+| `SeoModule` | Sitemap generator, robots.txt, canonical URLs, structured data (schema.org) |
+
+### Features
+
+**Analytics (service-layer only):**
+- Event tracking: visitor landing, product view, category view, add to cart, checkout, purchase, abandoned cart
+- Conversion funnel aggregation (7-day window)
+- Top products by views
+- Revenue metrics (total revenue, order count, AOV)
+- Abandoned cart detection
+- Extensible metadata per event
+
+**SEO:**
+- Sitemap generation (products + categories with priorities)
+- Robots.txt with crawl rules
+- Canonical URL generation
+- Structured data (Schema.org) for products, categories, organization
+- Support for meta titles/descriptions/alt text (in schema)
+
+**Security Hardening:**
+- Helmet security headers (CSP, CORS, X-Frame-Options, etc.) — already configured
+- CORS configured: origin whitelist, allowed methods, credentials
+- Structured logging with request IDs (X-Request-ID header)
+- Request tracing: all requests logged with method, URL, IP, duration, status
+- Error logging: errors logged with full stack trace and request context
+
+**Observability:**
+- Enhanced health check: database + Redis + queue health with latency
+- Structured logs: request ID, timing, IP address, error context
+- Health endpoints: GET /api/v1/health (comprehensive), GET /api/v1/health/ping (liveness)
+
+**Backup Foundation:**
+- Automated backup script (`scripts/backup-db.sh`)
+- Backup policy documentation with rotation/retention
+- Support for cron-based daily backups
+- Environment variable configuration (DB_HOST, DB_PORT, DB_NAME, DB_USER, RETENTION_DAYS)
+
+### Routes
+
+**SEO (public, no auth required):**
+- `GET /sitemap.xml` — dynamic sitemap with changefreq and priority
+- `GET /robots.txt` — crawl rules for search engines
+
+**Health (public):**
+- `GET /api/v1/health` — comprehensive health status (database, Redis, queues)
+- `GET /api/v1/health/ping` — simple liveness probe
+
+### Security Features
+- **CORS**: Configurable origin whitelist (default: localhost:3000, localhost:3002)
+- **Security headers**: CSP, X-Frame-Options, X-Content-Type-Options, etc. via Helmet
+- **Request tracing**: All requests logged with X-Request-ID for debugging
+- **Rate limiting**: ThrottlerGuard (100 req/60s) already configured
+- **Admin protection**: AdminJwtAuthGuard enforces separate admin auth
+- **Audit logging**: All mutations captured with before/after snapshots
+
+### Production Readiness
+- Backup scripts ready for cron automation
+- Structured logging for centralized log aggregation (e.g., ELK, DataDog)
+- Health checks compatible with Kubernetes probes
+- Request IDs enable distributed tracing
+- Environment variables support multi-environment deployment
+
+### Design Decisions (Phase 8)
+- **Analytics service-only** — no routes yet (UI deferred to Phase 9)
+- **Event tracking fire-and-forget** — analytics never breaks main flow
+- **SEO routes public** — sitemap.xml and robots.txt not behind auth
+- **Request ID in HTTP header** — X-Request-ID for log correlation
+- **Backup script portable** — works on any Linux system with PostgreSQL client
+- **Health check comprehensive** — database + Redis + queue status (not just ping)
+
+---
+
+## Verification Results (Phase 8)
+
+| Check | Result |
+|---|---|
+| API typecheck | ✅ PASS |
+| Storefront typecheck | ✅ PASS |
+| Admin typecheck | ✅ PASS |
+| API lint | ✅ PASS — 0 errors, 65 warnings (any type — minor) |
+| API production build | ✅ PASS |
+| Prisma client generation | ✅ PASS — AnalyticsEvent available |
+| PostgreSQL connection | ⚠️ BLOCKED — Docker not running |
+| Prisma migration apply | ⚠️ BLOCKED — requires PostgreSQL |
+
+---
+
+## Blockers (unchanged)
+
+Docker Desktop installed but not running. To test Phase 8 features at runtime:
+1. Start Docker Desktop
+2. `npm run docker:up`
+3. `npm run db:migrate:dev`
+4. Test SEO routes: GET /sitemap.xml, GET /robots.txt
+5. Test health: GET /api/v1/health
+6. Test analytics: use AnalyticsService to track events
+
+---
+
+## Next Step
+
+Phase 9: Testing, Deployment & Launch
+
+Do not start Phase 9 until explicitly instructed.
 
 ---
 

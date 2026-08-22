@@ -58,6 +58,10 @@ import { AdminCouponsModule } from './modules/admin-coupons/admin-coupons.module
 import { AdminReviewsModule } from './modules/admin-reviews/admin-reviews.module';
 import { AdminNotificationsModule } from './modules/admin-notifications/admin-notifications.module';
 
+// Phase 8 — Analytics & SEO
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { SeoModule } from './modules/seo/seo.module';
+
 // Feature
 import { HealthModule } from './modules/health/health.module';
 
@@ -125,6 +129,10 @@ import { HealthModule } from './modules/health/health.module';
     AdminCouponsModule,
     AdminReviewsModule,
     AdminNotificationsModule,
+
+    // ----- Phase 8 — Analytics & SEO ----------------------
+    AnalyticsModule,
+    SeoModule,
 
     // ----- Feature modules ----------------------------------
     HealthModule,

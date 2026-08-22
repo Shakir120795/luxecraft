@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -63,7 +64,8 @@ async function bootstrap() {
   // ----- Global exception filter ---------------------------
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // ----- Global response interceptor -----------------------
+  // ----- Global interceptors --------------------------------
+  app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   const port = process.env.API_PORT ?? 3001;
