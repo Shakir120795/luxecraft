@@ -85,3 +85,9 @@ temp/
 .cache/
 .turbo/
 .vercel/
+
+# Temporary migration/setup scripts
+apps/api/create-admin.sql
+apps/api/hash-password.js
+apps/api/migration.sql
+apps/api/update-admin-password.sql
