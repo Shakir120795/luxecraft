@@ -24,15 +24,15 @@ export class StorefrontController {
     @Query('categoryId') categoryId?: string,
     @Query('isFeatured') isFeatured?: string,
     @Query('search') search?: string,
-    @Query('skip') skip?: number,
-    @Query('take') take?: number,
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
   ) {
     return this.svc.getProducts({
       categoryId,
       isFeatured: isFeatured === 'true' ? true : undefined,
       search,
-      skip,
-      take,
+      skip: skip ? parseInt(skip, 10) : undefined,
+      take: take ? parseInt(take, 10) : undefined,
     });
   }
 
@@ -42,7 +42,7 @@ export class StorefrontController {
   }
 
   @Get('featured')
-  getFeaturedProducts(@Query('take') take?: number) {
-    return this.svc.getFeaturedProducts(take);
+  getFeaturedProducts(@Query('take') take?: string) {
+    return this.svc.getFeaturedProducts(take ? parseInt(take, 10) : undefined);
   }
 }

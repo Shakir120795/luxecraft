@@ -1,23 +1,37 @@
-/* LuxeCraft Storefront — Global Styles (Phase 1 Foundation) */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* LuxeCraft Premium Luxury Styling */
+
+@layer base {
+  * {
+    @apply border-luxury-sand;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
 }
 
-:root {
-  --color-primary: #1a1a1a;
-  --color-accent: #b8860b;
-  --color-bg: #fafaf8;
-  --color-text: #1a1a1a;
-  --color-muted: #6b7280;
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+@layer components {
+  /* Premium Button Styles */
+  .btn-luxury {
+    @apply px-8 py-4 bg-luxury-gold text-white font-semibold tracking-wide uppercase text-sm transition-all duration-300 hover:bg-luxury-darkGold hover:shadow-lg;
+  }
+  
+  .btn-luxury-outline {
+    @apply px-8 py-4 border-2 border-luxury-gold text-luxury-gold font-semibold tracking-wide uppercase text-sm transition-all duration-300 hover:bg-luxury-gold hover:text-white;
+  }
+  
+  /* Premium Card */
+  .card-luxury {
+    @apply bg-white border border-luxury-sand shadow-sm hover:shadow-md transition-shadow duration-300;
+  }
+  
+  /* Premium Input */
+  .input-luxury {
+    @apply px-4 py-3 border border-luxury-sand bg-white focus:outline-none focus:border-luxury-gold focus:ring-1 focus:ring-luxury-gold transition-colors;
+  }
 }
 
-html, body {
-  height: 100%;
-  font-family: var(--font-sans);
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  -webkit-font-smoothing: antialiased;
-}

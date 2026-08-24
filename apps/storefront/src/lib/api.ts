@@ -1,55 +1,104 @@
-/**
- * LuxeCraft API client foundation.
- * All communication from the storefront to the backend goes through this module.
- * Business logic must not live in the Next.js layer.
- */
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  timestamp: string;
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  description: string;
+  shortDescription: string;
+  regularPrice: string | number;  // API returns string
+  salePrice: string | number | null;  // API returns string or null
+  isFeatured: boolean;
+  status: string;
+  weightKg: number | null;
+  lengthCm: number | null;
+  widthCm: number | null;
+  media: ProductMedia[];
+  variants: ProductVariant[];
+  createdAt?: string;
 }
 
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly error: string,
-    message: string,
-  ) {
-    super(message);
-    this.name = 'ApiError';
+export interface ProductMedia {
+  id: string;
+  url: string;
+  altText: string | null;
+  type: string;
+  isMain: boolean;
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  sku: string;
+  stockQty: number;
+  regularPrice: number | null;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+  status: string;
+}
+
+export async function getProducts(limit?: number): Promise<Product[]> {
+  try {
+    const url = new URL(`${API_URL}/storefront/products`);
+    if (limit) url.searchParams.append('limit', limit.toString());
+
+    const res = await fetch(url.toString(), {
+      next: { revalidate: 3600 },
+    });
+
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    
+    // Handle API response structure: { success: true, data: { items: [...], total: 5 } }
+    if (data.success && data.data && Array.isArray(data.data.items)) {
+      return data.data.items;
+    }
+    
+    return Array.isArray(data) ? data : data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch products:', error);
+    return [];
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = `${API_BASE}${path}`;
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
-  });
+export async function getCategories(): Promise<Category[]> {
+  try {
+    const res = await fetch(`${API_URL}/storefront/categories`, {
+      next: { revalidate: 3600 },
+    });
 
-  const json = (await response.json()) as ApiResponse<T> | { success: false; statusCode: number; error: string; message: string };
-
-  if (!response.ok || !json.success) {
-    const err = json as { statusCode: number; error: string; message: string };
-    throw new ApiError(err.statusCode ?? response.status, err.error ?? 'UnknownError', err.message ?? 'Request failed');
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    
+    // Handle API response structure: { success: true, data: [...] }
+    if (data.success && Array.isArray(data.data)) {
+      return data.data;
+    }
+    
+    return Array.isArray(data) ? data : data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch categories:', error);
+    return [];
   }
-
-  return (json as ApiResponse<T>).data;
 }
 
-export const api = {
-  get: <T>(path: string) => request<T>(path, { method: 'GET' }),
-  post: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
-  put: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
-  patch: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
-};
+export async function getStorefrontCategories(): Promise<Category[]> {
+  try {
+    const res = await fetch(`${API_URL}/storefront/categories`, {
+      next: { revalidate: 3600 },
+    });
+
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+  } catch (error) {
+    console.error('Failed to fetch storefront categories:', error);
+    return [];
+  }
+}
